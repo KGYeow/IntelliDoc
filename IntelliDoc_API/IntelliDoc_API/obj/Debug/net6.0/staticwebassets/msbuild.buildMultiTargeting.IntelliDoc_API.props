@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\IntelliDoc_API.props" />
+</Project>
