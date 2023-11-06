@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   app: {
     // Global page headers: https://nuxt.com/docs/api/configuration/nuxt-config#head
     head: {
-      title: 'Modernize - Nuxt3 Typescript based Free Admin Dashboard Template',
+      title: 'USM Document Management System',
       htmlAttrs: { lang: 'en' },
       meta: [
         { charset: 'utf-8' },

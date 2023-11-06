@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <UiParentCard title="My Profile"> 
+      <UiParentCard title="My Profile">
         <div class="pa-7 pt-1 text-body-1">
           <form @submit.prevent="editUser">
             <div class="row">

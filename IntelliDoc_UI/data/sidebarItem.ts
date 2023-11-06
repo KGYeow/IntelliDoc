@@ -1,6 +1,5 @@
 import {
-  ApertureIcon,
-  CopyIcon,
+  CopyIcon, BooksIcon, ArchiveIcon,
   LayoutDashboardIcon, MoodHappyIcon, TypographyIcon
 } from 'vue-tabler-icons';
 
@@ -26,10 +25,16 @@ const sidebarItem: menu[] = [
     icon: LayoutDashboardIcon,
     to: '/'
   },
+  { header: 'Document' },
   {
-    title: 'Sample Page',
-    icon: ApertureIcon,
-    to: '/sample-page'
+    title: 'Repository',
+    icon: BooksIcon,
+    to: '/repository'
+  },
+  {
+    title: 'Archive',
+    icon: ArchiveIcon,
+    to: '/archive'
   },
   { header: 'Extra' },
   {

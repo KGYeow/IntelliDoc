@@ -5,8 +5,10 @@
 // Website: (1) https://getbootstrap.com/
 //          (2) https://element-plus.org/en-US/
 
-// Custom Layouts & Structure
+// Custom Cores & Layouts & Structure
+@import "./variable.scss";
 @import "./layouts.scss";
+@import "./footer.scss";
 
 // Core Files
 @import "./node_modules/bootstrap/scss/functions";

@@ -8,7 +8,7 @@
               <div class="d-flex justify-center py-4">
                 <LayoutFullLogo />
               </div>
-              <div class="text-body-1 text-muted text-center mb-3">Your Social Campaigns</div>
+              <div class="text-body-1 text-muted text-center mb-3">USM Document Management System</div>
               <AuthLoginForm />
               <h6 class="text-h6 text-muted font-weight-medium d-flex justify-center align-center mt-3">
                 New to Modernize?
@@ -36,6 +36,6 @@ definePageMeta({
 
 // Head
 useHead({
-  title: "Login | Modernize",
+  title: "Login | USM Document Management System",
 })
 </script>

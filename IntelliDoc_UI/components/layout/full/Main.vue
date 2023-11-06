@@ -2,28 +2,31 @@
 	<!------Sidebar-------->
 	<v-navigation-drawer left elevation="0" app class="leftSidebar" v-model="sDrawer">
 		<!---Logo part -->
-		<div class="pa-5">
-			<LayoutFullLogo />
+		<div class="d-flex pa-5">
+			<div class="logo mx-auto">
+				<NuxtLink to="/">
+					<img src="images/logos/usmLogo2.png">
+				</NuxtLink>
+			</div>
 		</div>
 		<!-- ---------------------------------------------- -->
 		<!-- Navigation -->
 		<!-- ---------------------------------------------- -->
 		<div>
-		<perfect-scrollbar class="scrollnavbar">
-			<v-list class="pa-6">
-				<!---Menu Loop -->
-				<template v-for="(item, i) in sidebarMenu">
-					<!---Item Sub Header -->
-					<LayoutFullVerticalSidebarNavGroup :item="item" v-if="item.header" :key="item.title" />
+			<perfect-scrollbar class="scrollnavbar">
+				<v-list class="pa-6 pt-0">
+					<!---Menu Loop -->
+					<template v-for="(item, i) in sidebarMenu">
+						<!---Item Sub Header -->
+						<LayoutFullVerticalSidebarNavGroup :item="item" v-if="item.header" :key="item.title" />
 
-					<!---Single Item-->
-					<LayoutFullVerticalSidebarNavItem :item="item" v-else class="leftPadding" />
-					<!---End Single Item-->
-				</template>
-			</v-list>
-		</perfect-scrollbar>
-	</div>
-
+						<!---Single Item-->
+						<LayoutFullVerticalSidebarNavItem :item="item" v-else class="leftPadding" />
+						<!---End Single Item-->
+					</template>
+				</v-list>
+			</perfect-scrollbar>
+		</div>
 	</v-navigation-drawer>
 	<!------Header-------->
 	<v-app-bar elevation="0" height="70">
@@ -34,7 +37,7 @@
 				</v-btn>
 			</div>
 			<div>
-        <!-- Notification -->
+        		<!-- Notification -->
 				<LayoutFullVerticalHeaderNotificationDD />
 				<!-- User Profile -->
 				<LayoutFullVerticalHeaderProfileDD />
