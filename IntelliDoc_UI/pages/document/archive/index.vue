@@ -10,4 +10,9 @@
 
 <script setup>
 import UiParentCard from '@/components/shared/UiParentCard.vue';
+
+// Head
+useHead({
+  title: "Archive | USM Document Management System",
+})
 </script>

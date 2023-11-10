@@ -10,4 +10,9 @@
 <script setup>
 /*Call Components*/
 import SalesOverview from '@/components/dashboard/SalesOverview.vue';
+
+// Head
+useHead({
+  title: "Dashboard | USM Document Management System",
+})
 </script>

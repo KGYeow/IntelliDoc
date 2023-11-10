@@ -5,7 +5,7 @@ const secondary = ref('rgb(var(--v-theme-secondary))');
 <template>
   <div class="logo mx-auto">
     <NuxtLink to="/">
-      <img src="images/logos/usmLogo.png" height="70">
+      <img src="/images/logos/usmLogo.png" height="70">
     </NuxtLink>
   </div>
 </template>

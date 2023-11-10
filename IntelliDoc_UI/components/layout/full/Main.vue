@@ -5,7 +5,7 @@
 		<div class="d-flex pa-5">
       <div class="logo mx-auto">
         <NuxtLink to="/">
-          <img src="images/logos/usmLogo2.png">
+          <img src="/images/logos/usmLogo2.png">
         </NuxtLink>
       </div>
 		</div>

@@ -37,12 +37,14 @@ const sidebarItem: menu[] = [
     title: 'Archive',
     icon: ArchiveIcon,
     to: '/document/archive',
+    auth: true
   },
   { header: 'Configuration' },
   {
     title: 'User Management',
     icon: UserCogIcon,
     to: '/configuration/userManagement',
+    auth: true
   },
   { header: 'Sample Page' },
   {
