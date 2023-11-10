@@ -1,5 +1,5 @@
 <template>
-  <v-locale-provider>
+  <v-locale-provider >
     <v-app>
       <LayoutFullMain/>
       <v-main>
@@ -9,8 +9,6 @@
           </div>
         </v-container>
       </v-main>
-      <!------Footer-------->
-      <LayoutCustomFooter/>
     </v-app>
   </v-locale-provider>
 </template>

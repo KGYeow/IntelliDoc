@@ -1,5 +1,5 @@
 import {
-  CopyIcon, BooksIcon, ArchiveIcon,
+  ApertureIcon, BooksIcon, ArchiveIcon, UserCogIcon, CopyIcon,
   LayoutDashboardIcon, MoodHappyIcon, TypographyIcon
 } from 'vue-tabler-icons';
 
@@ -16,6 +16,7 @@ export interface menu {
   disabled?: boolean;
   type?: string;
   subCaption?: string;
+  auth?: boolean;
 }
 
 const sidebarItem: menu[] = [
@@ -23,34 +24,47 @@ const sidebarItem: menu[] = [
   {
     title: 'Dashboard',
     icon: LayoutDashboardIcon,
-    to: '/'
+    to: '/dashboard',
+    auth: true
   },
   { header: 'Document' },
   {
     title: 'Repository',
     icon: BooksIcon,
-    to: '/repository'
+    to: '/document/repository',
   },
   {
     title: 'Archive',
     icon: ArchiveIcon,
-    to: '/archive'
+    to: '/document/archive',
   },
-  { header: 'Extra' },
+  { header: 'Configuration' },
+  {
+    title: 'User Management',
+    icon: UserCogIcon,
+    to: '/configuration/userManagement',
+  },
+  { header: 'Sample Page' },
+  {
+    title: 'Sample Page',
+    icon: ApertureIcon,
+    to: '/sample-page',
+    auth: true
+  },
   {
     title: 'Typography',
     icon: TypographyIcon,
-    to: '/typography'
+    to: '/sample-page/typography'
   },
   {
     title: 'Shadow',
     icon: CopyIcon,
-    to: '/shadow'
+    to: '/sample-page/shadow'
   },
   {
     title: 'Icons',
     icon: MoodHappyIcon,
-    to: '/icons'
+    to: '/sample-page/icons'
   },
 ];
 

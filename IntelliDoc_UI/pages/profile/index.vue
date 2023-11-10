@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <UiParentCard title="My Profile">
+      <UiParentCard title="My Profile"> 
         <div class="pa-7 pt-1 text-body-1">
           <form @submit.prevent="editUser">
             <div class="row">
@@ -56,13 +56,12 @@ const editUserDetails = ref({
 const editUser = async() => {
   try {
     const result = await fetchData.$put(`/User/Me/${user.value.id}`, editUserDetails.value)
-    
     if (!result.error) {
       isEdit.value = !isEdit.value
       ElNotification.success({ message: result.message })
     }
     else {
-      ElNotification.error({ message: "The user profile has been edited unsuccessfully.", duration: 0 })
+      ElNotification.error({ message: "The user profile has been edited unsuccessfully." })
     }
   } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
 }
