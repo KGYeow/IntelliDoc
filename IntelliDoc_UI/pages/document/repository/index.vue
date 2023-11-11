@@ -9,6 +9,12 @@
             :items="desserts"
             :items-per-page="itemsPerPage"
           >
+            <template v-slot:item.actions>
+              <v-btn icon="mdi-eye-outline" size="small" color="#68058d" variant="text" class="me-1"/>
+              <v-btn icon="mdi-download" size="small" color="#68058d" variant="text" class="me-1"/>
+              <v-btn icon="mdi-rename-outline" size="small" color="#68058d" variant="text" class="me-1"/>
+              <v-btn icon="mdi-update" size="small" color="#68058d" variant="text"/>
+            </template>
             <template v-slot:bottom>
               <div class="d-flex justify-content-center pt-2">
                 <el-pagination
@@ -24,6 +30,15 @@
       </UiParentCard>
     </v-col>
   </v-row>
+  <el-affix
+    class="position-absolute"
+    position="bottom"
+    :offset="30"
+    style="right: 30px; bottom: 100px;"
+  >
+    <v-btn icon="mdi-file-document-plus-outline" size="large" color="#68058d">
+    </v-btn>
+  </el-affix>
 </template>
 
 <script setup>
@@ -34,98 +49,76 @@ import { VDataTable } from 'vuetify/lib/labs/components.mjs';
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const headers = ref([
-  {
-    align: 'start',
-    key: 'name',
-    sortable: false,
-    title: 'Dessert (100g serving)',
-  },
-  { key: 'calories', title: 'Calories' },
-  { key: 'fat', title: 'Fat (g)' },
-  { key: 'carbs', title: 'Carbs (g)' },
-  { key: 'protein', title: 'Protein (g)' },
-  { key: 'iron', title: 'Iron (%)' },
+  { key: 'name', title: 'Name' },
+  { key: 'version', title: 'Version' },
+  { key: 'category', title: 'Category' },
+  { key: 'modifiedBy' , title: 'Modified By' },
+  { key: 'modifiedDate' , title: 'Modified Date' },
+  { key: 'actions', sortable: false }
 ])
 const desserts = ref([
   {
     name: 'Frozen Yogurt',
-    calories: 159,
-    fat: 6.0,
-    carbs: 24,
-    protein: 4.0,
-    iron: 1,
+    version: 159,
+    category: 6.0,
+    modifiedBy: 24,
+    modifiedDate: 24,
   },
   {
     name: 'Ice cream sandwich',
-    calories: 237,
-    fat: 9.0,
-    carbs: 37,
-    protein: 4.3,
-    iron: 1,
+    version: 237,
+    category: 9.0,
+    modifiedBy: 24,
+    modifiedDate: 37,
   },
   {
     name: 'Eclair',
-    calories: 262,
-    fat: 16.0,
-    carbs: 23,
-    protein: 6.0,
-    iron: 7,
+    version: 262,
+    category: 16.0,
+    modifiedBy: 24,
+    modifiedDate: 23,
   },
   {
     name: 'Cupcake',
-    calories: 305,
-    fat: 3.7,
-    carbs: 67,
-    protein: 4.3,
-    iron: 8,
+    version: 305,
+    category: 3.7,
+    modifiedDate: 67,
   },
   {
     name: 'Gingerbread',
-    calories: 356,
-    fat: 16.0,
-    carbs: 49,
-    protein: 3.9,
-    iron: 16,
+    version: 356,
+    category: 16.0,
+    modifiedDate: 49,
   },
   {
     name: 'Jelly bean',
-    calories: 375,
-    fat: 0.0,
-    carbs: 94,
-    protein: 0.0,
-    iron: 0,
+    version: 375,
+    category: 0.0,
+    modifiedDate: 94,
   },
   {
     name: 'Lollipop',
-    calories: 392,
-    fat: 0.2,
-    carbs: 98,
-    protein: 0,
-    iron: 2,
+    version: 392,
+    category: 0.2,
+    modifiedDate: 98,
   },
   {
     name: 'Honeycomb',
-    calories: 408,
-    fat: 3.2,
-    carbs: 87,
-    protein: 6.5,
-    iron: 45,
+    version: 408,
+    category: 3.2,
+    modifiedDate: 87,
   },
   {
     name: 'Donut',
-    calories: 452,
-    fat: 25.0,
-    carbs: 51,
-    protein: 4.9,
-    iron: 22,
+    version: 452,
+    category: 25.0,
+    modifiedDate: 51
   },
   {
     name: 'KitKat',
-    calories: 518,
-    fat: 26.0,
-    carbs: 65,
-    protein: 7,
-    iron: 6,
+    version: 518,
+    category: 26.0,
+    modifiedDate: 65,
   }
 ])
 
