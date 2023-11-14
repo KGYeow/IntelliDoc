@@ -13,7 +13,8 @@
               <v-btn icon="mdi-eye-outline" size="small" color="#68058d" variant="text" class="me-1"/>
               <v-btn icon="mdi-download" size="small" color="#68058d" variant="text" class="me-1"/>
               <v-btn icon="mdi-rename-outline" size="small" color="#68058d" variant="text" class="me-1"/>
-              <v-btn icon="mdi-update" size="small" color="#68058d" variant="text"/>
+              <v-btn icon="mdi-update" size="small" color="#68058d" variant="text" class="me-1"/>
+              <v-btn icon="mdi-archive-outline" size="small" color="#68058d" variant="text"/>
             </template>
             <template v-slot:bottom>
               <div class="d-flex justify-content-center pt-2">
@@ -36,8 +37,7 @@
     :offset="30"
     style="right: 30px; bottom: 100px;"
   >
-    <v-btn icon="mdi-file-document-plus-outline" size="large" color="#68058d">
-    </v-btn>
+    <v-btn icon="mdi-file-document-plus-outline" size="large" color="#68058d" @click="uploadDocument"/>
   </el-affix>
 </template>
 
@@ -130,5 +130,15 @@ useHead({
 // Methods
 const pageCount = () => {
   return Math.ceil(desserts.value.length / itemsPerPage.value)
+}
+const uploadDocument = () => {
+  let input = document.createElement('input');
+  input.type = 'file';
+  input.onchange = function () {
+    input.files[0].arrayBuffer().then(function (arrayBuffer) {
+        console.log(new TextDecoder().decode(arrayBuffer));
+    });
+  }
+  input.click();
 }
 </script>

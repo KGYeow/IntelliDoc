@@ -17,12 +17,10 @@
 				<v-list class="pa-6">
 					<!---Menu Loop -->
 					<template v-for="(item, i) in fullyFilteredSidebarMenu">
-						<!---Item Sub Header -->
-						<LayoutFullVerticalSidebarNavGroup :item="item" v-if="item.header" :key="item.title" />
-
+						<!---Item Header -->
+						<LayoutFullVerticalSidebarNavHeader :item="item" v-if="item.header" :key="item.title"/>
 						<!---Single Item-->
-						<LayoutFullVerticalSidebarNavItem :item="item" v-else class="leftPadding" />
-						<!---End Single Item-->
+						<LayoutFullVerticalSidebarNavItem :item="item" v-else/>
 					</template>
 				</v-list>
 			</perfect-scrollbar>
