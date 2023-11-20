@@ -13,8 +13,8 @@
 		<!-- Navigation -->
 		<!-- ---------------------------------------------- -->
 		<div>
-			<perfect-scrollbar class="scrollnavbar">
-				<v-list class="pa-6">
+			<el-scrollbar class="scrollnavbar">
+				<v-list class="pa-6 pt-0">
 					<!---Menu Loop -->
 					<template v-for="(item, i) in fullyFilteredSidebarMenu">
 						<!---Item Header -->
@@ -23,7 +23,7 @@
 						<LayoutFullVerticalSidebarNavItem :item="item" v-else/>
 					</template>
 				</v-list>
-			</perfect-scrollbar>
+			</el-scrollbar>
 		</div>
 	</v-navigation-drawer>
 	<!------Header-------->

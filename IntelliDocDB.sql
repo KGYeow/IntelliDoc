@@ -177,13 +177,11 @@ GO
 ALTER TABLE [dbo].[Document]  WITH CHECK ADD  CONSTRAINT [FK_Document_DocumentCategory] FOREIGN KEY([CategoryId])
 REFERENCES [dbo].[DocumentCategory] ([Id])
 GO
-
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_DocumentCategory]
 GO
 
 ALTER TABLE [dbo].[DocumentVersionHistory]  WITH CHECK ADD  CONSTRAINT [FK_DocumentVersionHistory_DocumentCategory] FOREIGN KEY([CategoryId])
 REFERENCES [dbo].[DocumentCategory] ([Id])
 GO
-
 ALTER TABLE [dbo].[DocumentVersionHistory] CHECK CONSTRAINT [FK_DocumentVersionHistory_DocumentCategory]
 GO
