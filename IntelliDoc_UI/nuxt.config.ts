@@ -75,7 +75,7 @@ export default defineNuxtConfig({
       token: {
         maxAgeInSeconds: 60 * 60 * 24
       },
-      sessionDataType: { id: 'number', fullName: 'string', username: 'string', email: 'string', password: 'string' }
+      sessionDataType: { id: 'number', username: 'string', password: 'string', fullName: 'string', email: 'string', role: 'string' }
     },
     baseURL: 'https://localhost:7134/api',
   }

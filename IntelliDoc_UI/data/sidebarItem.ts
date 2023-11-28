@@ -24,46 +24,35 @@ const sidebarItem: menu[] = [
     to: '/dashboard',
     auth: true
   },
-  { header: 'Document' },
   {
-    title: 'Repository',
-    icon: tablerIcon.BooksIcon,
-    to: '/document/repository',
+    title: 'Document',
+    icon: tablerIcon.FileDescriptionIcon,
+    children: [
+      {
+        title: 'Repository',
+        icon: tablerIcon.BooksIcon,
+        to: '/document/repository',
+        auth: true
+      },
+      {
+        title: 'Archive',
+        icon: tablerIcon.ArchiveIcon,
+        to: '/document/archive',
+        auth: true
+      },
+    ]
   },
   {
-    title: 'Archive',
-    icon: tablerIcon.ArchiveIcon,
-    to: '/document/archive',
-    auth: true
-  },
-  { header: 'Configuration' },
-  {
-    title: 'User Management',
-    icon: tablerIcon.UserCogIcon,
-    to: '/configuration/userManagement',
-    auth: true
-  },
-  { header: 'Sample Page' },
-  {
-    title: 'Sample Page',
-    icon: tablerIcon.ApertureIcon,
-    to: '/sample-page',
-    auth: true
-  },
-  {
-    title: 'Typography',
-    icon: tablerIcon.TypographyIcon,
-    to: '/sample-page/typography'
-  },
-  {
-    title: 'Shadow',
-    icon: tablerIcon.CopyIcon,
-    to: '/sample-page/shadow'
-  },
-  {
-    title: 'Icons',
-    icon: tablerIcon.MoodHappyIcon,
-    to: '/sample-page/icons'
+    title: "Configuration",
+    icon: tablerIcon.SettingsIcon,
+    children: [
+      {
+        title: "User Settings",
+        icon: tablerIcon.UserCogIcon,
+        to: "/configuration/user-settings",
+        auth: true,
+      },
+    ]
   },
 ];
 

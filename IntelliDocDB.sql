@@ -129,21 +129,21 @@ GO
 
 SET IDENTITY_INSERT [dbo].[User] ON
 INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [Password]) VALUES (1, 1, N'Admin', N'admin', N'admin@gmail.com', N'33354741122871651676713774147412831195')
-INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [Password]) VALUES (2, 2, N'User1', N'User1', N'user1@gmail.com', N'107144139120952191609010070521251748216197')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [Password]) VALUES (2, 2, N'Staff', N'staff', N'staff@gmail.com', N'18833213210117723916811824913021616923162239')
 SET IDENTITY_INSERT [dbo].[User] OFF
 GO
 
 SET IDENTITY_INSERT [dbo].[UserRole] ON
 INSERT [dbo].[UserRole] ([ID], [Name]) VALUES (1, N'Admin')
-INSERT [dbo].[UserRole] ([ID], [Name]) VALUES (2, N'Normal')
+INSERT [dbo].[UserRole] ([ID], [Name]) VALUES (2, N'Staff')
 SET IDENTITY_INSERT [dbo].[UserRole] OFF
 GO
 
 SET IDENTITY_INSERT [dbo].[Page] ON
 INSERT [dbo].[Page] ([ID], [Name]) VALUES (1, N'Dashboard')
-INSERT [dbo].[Page] ([ID], [Name]) VALUES (2, N'Sample Page')
-INSERT [dbo].[Page] ([ID], [Name]) VALUES (3, N'Repository')
-INSERT [dbo].[Page] ([ID], [Name]) VALUES (4, N'Archive')
+INSERT [dbo].[Page] ([ID], [Name]) VALUES (2, N'Repository')
+INSERT [dbo].[Page] ([ID], [Name]) VALUES (3, N'Archive')
+INSERT [dbo].[Page] ([ID], [Name]) VALUES (4, N'User Settings')
 SET IDENTITY_INSERT [dbo].[Page] OFF
 GO
 
@@ -153,7 +153,7 @@ INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (2, 1, 2)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (3, 1, 3)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (4, 1, 4)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (5, 2, 1)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 2, 3)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 2, 2)
 SET IDENTITY_INSERT [dbo].[RoleAccessPage] OFF
 GO
 
