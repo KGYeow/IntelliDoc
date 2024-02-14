@@ -39,37 +39,34 @@ namespace IntelliDoc_API.Models
             {
                 entity.ToTable("Document");
 
-                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+
+                entity.Property(e => e.CreatedById).HasColumnName("CreatedByID");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.LatestArchivedDate).HasColumnType("datetime");
-
-                entity.Property(e => e.LatestRestoredDate).HasColumnType("datetime");
-
                 entity.Property(e => e.Name).IsUnicode(false);
-
-                entity.Property(e => e.Type)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-
-                entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
-
-                entity.Property(e => e.Version)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
 
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.Documents)
                     .HasForeignKey(d => d.CategoryId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Document_DocumentCategory");
+
+                entity.HasOne(d => d.CreatedBy)
+                    .WithMany(p => p.Documents)
+                    .HasForeignKey(d => d.CreatedById)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Document_User");
             });
 
             modelBuilder.Entity<DocumentCategory>(entity =>
             {
                 entity.ToTable("DocumentCategory");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
 
                 entity.Property(e => e.Name).IsUnicode(false);
             });
@@ -78,19 +75,17 @@ namespace IntelliDoc_API.Models
             {
                 entity.ToTable("DocumentVersionHistory");
 
-                entity.Property(e => e.CreatedBy).HasMaxLength(100);
+                entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+                entity.Property(e => e.ArchivedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.LatestArchivedDate).HasColumnType("datetime");
-
-                entity.Property(e => e.LatestRestoredDate).HasColumnType("datetime");
+                entity.Property(e => e.DocumentId).HasColumnName("DocumentID");
 
                 entity.Property(e => e.Type)
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
-                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                entity.Property(e => e.UpdatedById).HasColumnName("UpdatedByID");
 
                 entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
@@ -98,10 +93,11 @@ namespace IntelliDoc_API.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Category)
+                entity.HasOne(d => d.UpdatedBy)
                     .WithMany(p => p.DocumentVersionHistories)
-                    .HasForeignKey(d => d.CategoryId)
-                    .HasConstraintName("FK_DocumentVersionHistory_DocumentCategory");
+                    .HasForeignKey(d => d.UpdatedById)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentVersionHistory_User");
             });
 
             modelBuilder.Entity<Page>(entity =>
@@ -109,6 +105,8 @@ namespace IntelliDoc_API.Models
                 entity.ToTable("Page");
 
                 entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.AccessName).IsUnicode(false);
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
@@ -155,6 +153,7 @@ namespace IntelliDoc_API.Models
                 entity.HasOne(d => d.UserRole)
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.UserRoleId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_UserRole");
             });
 

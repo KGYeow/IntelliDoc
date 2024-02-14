@@ -32,13 +32,12 @@ namespace RnD_Traceability_System_API
         public IActionResult GetLoginInfo([FromBody] LoginModel model)
         {
             var user = userService.GetUser(model.Username);
-
             if (user != null)
             {
                 if (!userService.CheckPassword(user, model.Password))
-                    throw new Exception("Incorrect password.");
+                    throw new Exception("Incorrect password");
             }
-            return Ok(new Response { Status = "Success", Message = "User login successfully!" });
+            return Ok(new Response { Status = "Success", Message = "User login successfully" });
         }
 
         [HttpPost]
@@ -48,6 +47,7 @@ namespace RnD_Traceability_System_API
             var user = userService.GetUser(model.Username);
             var authClaims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString() ?? ""),
                 new Claim(ClaimTypes.Name, user.Username ?? ""),
             };
 
@@ -67,7 +67,7 @@ namespace RnD_Traceability_System_API
         [Route("Logout")]
         public IActionResult Logout()
         {
-            return Ok(new Response { Status = "Success", Message = "User logout successfully!" });
+            return Ok(new Response { Status = "Success", Message = "User logout successfully" });
         }
 
         [HttpPost]
@@ -78,31 +78,33 @@ namespace RnD_Traceability_System_API
             var existingEmail = context.Users.Where(a => a.Email == model.Email).FirstOrDefault();
 
             if (existingUser != null)
-                throw new Exception("Username has been used.");
+                throw new Exception("Username has been used");
             if (existingEmail != null)
-                throw new Exception("Email has been used.");
+                throw new Exception("Email has been used");
 
-            var newUser = new User();
-            newUser.Username = model.Username;
-            newUser.FullName = model.Username;
-            newUser.Email = model.Email;
-            
+            var role = context.UserRoles.Where(a => a.Name == model.Role).FirstOrDefault();
+            var newUser = new User
+            {
+                UserRoleId = role.Id,
+                FullName = model.Username,
+                Username = model.Username,
+                Email = model.Email
+            };
             var createUser = userService.Create(newUser, model.Password);
+
             if (createUser != null)
-                return Ok(new { Error = false, Message = "User register successfully!" }); 
+                return Ok(new { Error = false, Message = "User register successfully" });
             else
-                return Ok(new { Error = true, Message = "User register unsuccessful." });
+                return Ok(new { Error = true, Message = "User register unsuccessful" });
         }
 
         [HttpGet]
-        [Route("Me")]
+        [Route("me")]
         [Authorize]
         public IActionResult Me()
         {
             var user = userService.GetUser(User);
-            var userRole = context.UserRoles.FirstOrDefault(a => a.Id == user.UserRoleId);
-            var userRoleName = userRole != null ? userRole.Name : string.Empty;
-            return Ok(new { id = user.Id, username = user.Username, password = user.Password, fullName = user.FullName, email = user.Email, role = userRoleName });
+            return Ok(user);
         }
 
         [HttpGet]

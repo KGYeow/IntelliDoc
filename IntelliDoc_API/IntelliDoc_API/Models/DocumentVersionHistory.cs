@@ -7,18 +7,14 @@ namespace IntelliDoc_API.Models
     {
         public int Id { get; set; }
         public int DocumentId { get; set; }
-        public string? Version { get; set; }
-        public int? CategoryId { get; set; }
-        public string? CreatedBy { get; set; }
-        public string? UpdatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
+        public string Version { get; set; } = null!;
+        public int UpdatedById { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public DateTime? LatestArchivedDate { get; set; }
-        public DateTime? LatestRestoredDate { get; set; }
-        public byte[]? Attachment { get; set; }
-        public string? Type { get; set; }
-        public bool? IsArchived { get; set; }
+        public DateTime? ArchivedDate { get; set; }
+        public byte[] Attachment { get; set; } = null!;
+        public string Type { get; set; } = null!;
+        public bool IsArchived { get; set; }
 
-        public virtual DocumentCategory? Category { get; set; }
+        public virtual User UpdatedBy { get; set; } = null!;
     }
 }

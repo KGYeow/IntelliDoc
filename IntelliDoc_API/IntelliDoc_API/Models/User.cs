@@ -5,13 +5,22 @@ namespace IntelliDoc_API.Models
 {
     public partial class User
     {
+        public User()
+        {
+            DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
+            Documents = new HashSet<Document>();
+        }
+
         public int Id { get; set; }
-        public int? UserRoleId { get; set; }
-        public string? FullName { get; set; }
+        public int UserRoleId { get; set; }
+        public string FullName { get; set; } = null!;
         public string Username { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string? Password { get; set; }
+        public byte[]? ProfilePhoto { get; set; }
+        public string Password { get; set; } = null!;
 
-        public virtual UserRole? UserRole { get; set; }
+        public virtual UserRole UserRole { get; set; } = null!;
+        public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
+        public virtual ICollection<Document> Documents { get; set; }
     }
 }
