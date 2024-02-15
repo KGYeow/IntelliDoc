@@ -5,6 +5,11 @@ namespace IntelliDoc_API.Models
 {
     public partial class Document
     {
+        public Document()
+        {
+            DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
+        }
+
         public int Id { get; set; }
         public string Name { get; set; } = null!;
         public int CategoryId { get; set; }
@@ -15,5 +20,6 @@ namespace IntelliDoc_API.Models
 
         public virtual DocumentCategory Category { get; set; } = null!;
         public virtual User CreatedBy { get; set; } = null!;
+        public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
     }
 }

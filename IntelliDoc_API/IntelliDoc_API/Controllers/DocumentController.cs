@@ -1,8 +1,9 @@
-﻿using IntelliDoc_API.Models;
+﻿using IntelliDoc_API.Authentication;
+using IntelliDoc_API.Dto.Document;
+using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -14,190 +15,185 @@ namespace IntelliDoc_API.Controllers
         {
         }
 
+        // Get the options for filters.
         [HttpGet]
-        [Route("FilterOption")]
-        public IActionResult GetFilterOption()
+        [Route("Repository/FilterOption")]
+        public IActionResult GetRepositoryFilterOption()
         {
-            var record = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList();
-            var documentName = record.OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
-            return Ok(new { documentName });
+            var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
+                .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
+            var docCategoryList = context.DocumentCategories.ToList()
+                .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
+
+            return Ok(new { docNameList, docCategoryList });
         }
 
+        // Get the filtered repository list.
         [HttpGet]
-        [Route("Result")]
-        public IActionResult Get([FromQuery] string? documentName = null, [FromQuery] string? category = null, [FromQuery] string? type = null)
+        [Route("Repository/Filter")]
+        public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
-            var l = context.Documents.Include(a => a.Category).Where(a => a.IsAllVersionsArchived == false).ToList()
-                .Select(x => new { x.Id, name = x.Name, version = x.Version, categoryId = x.CategoryId, category = x.Category.Name, createdBy = x.CreatedBy, createdDate = x.CreatedDate, updatedDate = x.UpdatedDate, type = x.Type });
+            var l = context.DocumentVersionHistories
+                .Include(a => a.Document).Include(a => a.Document.Category).Include(a => a.Document.CreatedBy)
+                .Where(a => a.Document.IsAllVersionsArchived == false)
+                .GroupBy(a => a.DocumentId)
+                .Select(group => group.OrderByDescending(a => a.Id).FirstOrDefault())
+                .Select(x => new
+                {
+                    id = x.DocumentId,
+                    name = x.Document.Name,
+                    category = x.Document.Category.Name,
+                    modifiedById = x.UpdatedById == null ? x.Document.CreatedById : x.UpdatedById,
+                    modifiedBy = x.UpdatedById == null ? x.Document.CreatedBy : x.UpdatedBy,
+                    modifiedDate = x.UpdatedById == null ? x.Document.CreatedDate : x.UpdatedDate,
+                    type = x.Type
+                });
 
-            if (documentName != null)
-                l = l.Where(a => a.name == documentName);
-            if (category != null)
-                l = l.Where(a => a.category == category);
-            if (type != null)
-                l = l.Where(a => a.type == type);
+            if (dto.DocId != null)
+                l = l.Where(a => a.id == dto.DocId);
+            if (dto.Category != null)
+                l = l.Where(a => a.category == dto.Category);
+            if (dto.Type != null)
+                l = l.Where(a => a.type == dto.Type);
             l.ToList();
 
             return Ok(l);
         }
 
+        // Get
+
+        // Get the document attachment.
         [HttpGet]
-        [Route("GetAttachment/{Id}")]
-        public IActionResult GetAttachment(int id)
+        [Route("GetAttachment/{DocId}/{Version}")]
+        public IActionResult GetDocumentAttachment(int docId, string version)
         {
-            var document = context.Documents.Where(d => d.Id == id).FirstOrDefault();
-            if (document.Attachment == null)
+            var document = new DocumentVersionHistory();
+
+            if (version == "Latest")
+                document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
+            else
+                document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
+
+            if (document == null)
                 throw new Exception("The document is not found in the system!");
 
             return Ok(document.Attachment);
         }
 
+        // Upload and create the new document.
         [HttpPost]
         [Route("")]
-        public IActionResult Create([FromBody] DocumentDto dto)
+        public IActionResult Create([FromBody] RepositoryCreate dto)
         {
             var user = userService.GetUser(User);
-            var existingDoc = context.Documents.Where(a => a.Name == dto.DocumentName).Any();
+            var existingDoc = context.Documents.Where(a => a.Name == dto.DocName).Any();
 
             if (existingDoc)
-                throw new Exception("Document Name already exist");
+                throw new Exception("The document name already exists");
 
             var category = context.DocumentCategories.Where(a => a.Name == dto.Category).FirstOrDefault();
 
-            var document = new Document();
-            document.Name = dto.DocumentName;
-            document.Version = "1.0";
-            document.CategoryId = category.Id;
-            document.CreatedBy = user.FullName;
-            document.CreatedDate = DateTime.Now;
-            document.Attachment = dto.Attachment;
-            document.Type = dto.Type;
-            document.HaveArchivedDocVersion = false;
-            document.IsAllVersionsArchived = false;
+            var document = new Document
+            {
+                Name = dto.DocName,
+                CategoryId = category.Id,
+                CreatedById = user.Id,
+                CreatedDate = DateTime.Now,
+                HaveArchivedDocVersion = false,
+                IsAllVersionsArchived = false
+            };
             context.Documents.Add(document);
             context.SaveChanges();
 
-            var versionHistory = new DocumentVersionHistory();
-            versionHistory.DocumentId = document.Id;
-            versionHistory.Version = document.Version;
-            versionHistory.CategoryId = document.CategoryId;
-            versionHistory.CreatedBy = user.FullName;
-            versionHistory.CreatedDate = document.CreatedDate;
-            versionHistory.Attachment = document.Attachment;
-            versionHistory.Type = document.Type;
-            versionHistory.IsArchived = false;
+            var versionHistory = new DocumentVersionHistory
+            {
+                DocumentId = document.Id,
+                Version = "1.0",
+                Attachment = dto.Attachment,
+                Type = dto.Type,
+                IsArchived = false
+            };
             context.DocumentVersionHistories.Add(versionHistory);
             context.SaveChanges();
 
-            return Ok(document);
+            return Ok(new Response { Status = "Success", Message = "New document created successfully" });
         }
 
+        // Edit and update the existing document.
         [HttpPut]
-        [Route("{Id}")]
-        public IActionResult Update(int id, [FromBody] DocumentEditDto dto)
+        [Route("{DocId}")]
+        public IActionResult Update(int docId, [FromBody] RepositoryUpdate dto)
         {
             var user = userService.GetUser(User);
-            var data = context.Documents.Where(d => d.Id == id).FirstOrDefault();
+            var previousDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
 
-            var newVersion = data.Version;
-            string[] versionComponents = newVersion.Split('.');
+            string[] versionComponents = previousDocVersion.Version.Split('.');
             int major = int.Parse(versionComponents[0]);
             int minor = int.Parse(versionComponents[1]);
 
-            if (dto.VersionUpdate == "Major")
+            var newVersion = "";
+            if (dto.UpdateDegree == "Major")
                 newVersion = $"{++major}.0";
             else
                 newVersion = $"{major}.{++minor}";
 
-            var newCategory = context.DocumentCategories.Where(a => a.Name == dto.Category).FirstOrDefault();
-            var oldCategory = context.DocumentCategories.Where(a => a.Id == data.CategoryId).FirstOrDefault();
-
-            var datachanges = "Document Name: " + data.Name;
-            if (data.Version != newVersion)
+            var versionHistory = new DocumentVersionHistory
             {
-                datachanges += ", Version: [" + data.Version + " > " + newVersion + "]";
-            }
-            if (oldCategory.Id != newCategory.Id)
-            {
-                datachanges += ", Category: [" + oldCategory.Name + " > " + newCategory.Name + "]";
-            }
-
-            data.Version = newVersion;
-            data.CategoryId = newCategory.Id;
-            data.UpdatedBy = user.FullName;
-            data.UpdatedDate = DateTime.Now;
-            data.Attachment = dto.Attachment;
-            data.Type = dto.Type;
-            context.Documents.Update(data);
-            context.SaveChanges();
-
-            var versionHistory = new DocumentVersionHistory();
-            versionHistory.DocumentId = data.Id;
-            versionHistory.Version = newVersion;
-            versionHistory.CategoryId = data.CategoryId;
-            versionHistory.CreatedBy = data.CreatedBy;
-            versionHistory.CreatedDate = data.CreatedDate;
-            versionHistory.UpdatedBy = data.UpdatedBy;
-            versionHistory.UpdatedDate = data.UpdatedDate;
-            versionHistory.Attachment = data.Attachment;
-            versionHistory.Type = data.Type;
-            versionHistory.IsArchived = false;
+                DocumentId = previousDocVersion.DocumentId,
+                Version = newVersion,
+                UpdatedById = user.Id,
+                UpdatedDate = DateTime.Now,
+                Attachment = dto.Attachment,
+                Type = dto.Type,
+                IsArchived = false
+            };
             context.DocumentVersionHistories.Add(versionHistory);
             context.SaveChanges();
 
-            return Ok(data);
+            return Ok(new Response { Status = "Success", Message = "Existing document updated successfully" });
         }
 
+        // Archive the existing document or its specific version.
         [HttpPut]
-        [Route("Archive/{Id}")]
-        public IActionResult Archive(int id)
+        [Route("Archive/{DocId}/{Version}")]
+        public IActionResult Archive(int docId, string version)
         {
             var user = userService.GetUser(User);
-            var data = context.Documents.Where(a => a.Id == id).FirstOrDefault();
-            var dataVersionHistory = context.DocumentVersionHistories.Where(a => a.DocumentId == id).ToList();
+            var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            existingDoc.HaveArchivedDocVersion = true;
 
-            var archivedDate = DateTime.Now;
-            foreach (var versionHistory in dataVersionHistory)
+            if (version == "All")
             {
-                versionHistory.LatestArchivedDate = archivedDate;
-                versionHistory.IsArchived = true;
-                context.DocumentVersionHistories.Update(versionHistory);
+                existingDoc.IsAllVersionsArchived = true;
+                context.Documents.Update(existingDoc);
                 context.SaveChanges();
+
+                var existingVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).ToList();
+                var archivedDate = DateTime.Now;
+                foreach (var versionHistory in existingVersionHistories)
+                {
+                    versionHistory.ArchivedDate = archivedDate;
+                    versionHistory.IsArchived = true;
+                    context.DocumentVersionHistories.Update(versionHistory);
+                    context.SaveChanges();
+                }
+
+                return Ok(new Response { Status = "Success", Message = "Existing document archived successfully" });
             }
+            else
+            {
 
-            data.LatestArchivedDate = archivedDate;
-            data.HaveArchivedDocVersion = true;
-            data.IsAllVersionsArchived = true;
-            context.Documents.Update(data);
-            context.SaveChanges();
+                context.Documents.Update(existingDoc);
+                context.SaveChanges();
 
-            return Ok(data);
-        }
+                var existingVersionHistory = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
+                existingVersionHistory.ArchivedDate = DateTime.Now;
+                existingVersionHistory.IsArchived = true;
+                context.DocumentVersionHistories.Update(existingVersionHistory);
+                context.SaveChanges();
 
-        public class DocumentDto
-        {
-            [Required(ErrorMessage = "Document Name required")]
-            public string? DocumentName { get; set; }
-            [Required(ErrorMessage = "Description required")]
-            public string? Description { get; set; }
-            [Required(ErrorMessage = "Category required")]
-            public string? Category { get; set; }
-            [Required(ErrorMessage = "Attachment required")]
-            public byte[]? Attachment { get; set; }
-            [Required(ErrorMessage = "Document Type required")]
-            public string? Type { get; set; }
-        }
-
-        public class DocumentEditDto
-        {
-            [Required(ErrorMessage = "Version Update required")]
-            public string? VersionUpdate { get; set; }
-            [Required(ErrorMessage = "Category required")]
-            public string? Category { get; set; }
-            [Required(ErrorMessage = "Attachment required")]
-            public byte[]? Attachment { get; set; }
-            [Required(ErrorMessage = "Document Type required")]
-            public string? Type { get; set; }
+                return Ok(new Response { Status = "Success", Message = "Specific document version archived successfully" });
+            }
         }
     }
 }

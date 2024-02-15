@@ -63,6 +63,23 @@ CREATE TABLE [dbo].[RoleAccessPage](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[Notification]    Script Date: 20/11/2023 9:25:00 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Notification](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[UserID] [int] NOT NULL,
+	[Title] [varchar](MAX) NOT NULL,
+	[Description] [varchar](MAX) NOT NULL,
+	[IsRead] [bit] NOT NULL,
+ CONSTRAINT [PK_Notification] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Document]    Script Date: 10/11/2023 2:34:48 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -105,7 +122,7 @@ CREATE TABLE [dbo].[DocumentVersionHistory](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[DocumentID] [int] NOT NULL,
 	[Version] [varchar](50) NOT NULL,
-	[UpdatedByID] [int] NOT NULL,
+	[UpdatedByID] [int] NULL,
 	[UpdatedDate] [datetime] NULL,
 	[ArchivedDate] [datetime] NULL,
 	[Attachment] [varbinary](max) NOT NULL,
@@ -183,18 +200,28 @@ GO
 ALTER TABLE [dbo].[RoleAccessPage] CHECK CONSTRAINT [FK_RoleAccessPage_UserRole]
 GO
 
+ALTER TABLE [dbo].[Notification] WITH CHECK ADD CONSTRAINT [FK_Notification_User] FOREIGN KEY([UserID])
+REFERENCES [dbo].[User] ([ID])
+GO
+ALTER TABLE [dbo].[Notification] CHECK CONSTRAINT [FK_Notification_User]
+GO
+
 ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_DocumentCategory] FOREIGN KEY([CategoryID])
 REFERENCES [dbo].[DocumentCategory] ([ID])
 GO
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_DocumentCategory]
 GO
-
 ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_User] FOREIGN KEY([CreatedByID])
 REFERENCES [dbo].[User] ([ID])
 GO
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_User]
 GO
 
+ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_Document] FOREIGN KEY([DocumentID])
+REFERENCES [dbo].[Document] ([ID])
+GO
+ALTER TABLE [dbo].[DocumentVersionHistory] CHECK CONSTRAINT [FK_DocumentVersionHistory_Document]
+GO
 ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_User] FOREIGN KEY([UpdatedByID])
 REFERENCES [dbo].[User] ([ID])
 GO

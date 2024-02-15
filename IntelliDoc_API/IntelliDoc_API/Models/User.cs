@@ -9,6 +9,7 @@ namespace IntelliDoc_API.Models
         {
             DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
             Documents = new HashSet<Document>();
+            Notifications = new HashSet<Notification>();
         }
 
         public int Id { get; set; }
@@ -22,5 +23,6 @@ namespace IntelliDoc_API.Models
         public virtual UserRole UserRole { get; set; } = null!;
         public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
         public virtual ICollection<Document> Documents { get; set; }
+        public virtual ICollection<Notification> Notifications { get; set; }
     }
 }

@@ -19,6 +19,7 @@ namespace IntelliDoc_API.Models
         public virtual DbSet<Document> Documents { get; set; } = null!;
         public virtual DbSet<DocumentCategory> DocumentCategories { get; set; } = null!;
         public virtual DbSet<DocumentVersionHistory> DocumentVersionHistories { get; set; } = null!;
+        public virtual DbSet<Notification> Notifications { get; set; } = null!;
         public virtual DbSet<Page> Pages { get; set; } = null!;
         public virtual DbSet<RoleAccessPage> RoleAccessPages { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
@@ -93,11 +94,35 @@ namespace IntelliDoc_API.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
+                entity.HasOne(d => d.Document)
+                    .WithMany(p => p.DocumentVersionHistories)
+                    .HasForeignKey(d => d.DocumentId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentVersionHistory_Document");
+
                 entity.HasOne(d => d.UpdatedBy)
                     .WithMany(p => p.DocumentVersionHistories)
                     .HasForeignKey(d => d.UpdatedById)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_DocumentVersionHistory_User");
+            });
+
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.ToTable("Notification");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Description).IsUnicode(false);
+
+                entity.Property(e => e.Title).IsUnicode(false);
+
+                entity.Property(e => e.UserId).HasColumnName("UserID");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Notifications)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Notification_User");
             });
 
             modelBuilder.Entity<Page>(entity =>

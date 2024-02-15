@@ -13,7 +13,7 @@ namespace IntelliDoc_API.Controllers
     [ApiController]
     public class UserController : BaseController
     {
-        public UserController(IConfiguration configuration, UserService userService, Law_Firm_Management_System_DBContext context) : base(configuration, userService, context)
+        public UserController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
         }
 
