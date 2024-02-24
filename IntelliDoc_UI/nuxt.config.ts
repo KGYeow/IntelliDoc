@@ -39,11 +39,6 @@ export default defineNuxtConfig({
     shim: false
   },
 
-  // build: https://nuxt.com/docs/api/nuxt-config#build
-  build: {
-    transpile: ["vuetify"],
-  },
-
   // vite: https://nuxt.com/docs/api/nuxt-config#vite
   vite: {
     define: {

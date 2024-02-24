@@ -9,15 +9,15 @@ namespace IntelliDoc_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DocumentController : BaseController
+    public class RepositoryController : BaseController
     {
-        public DocumentController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
+        public RepositoryController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
         }
 
         // Get the options for filters.
         [HttpGet]
-        [Route("Repository/FilterOption")]
+        [Route("FilterOption")]
         public IActionResult GetRepositoryFilterOption()
         {
             var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
@@ -30,7 +30,7 @@ namespace IntelliDoc_API.Controllers
 
         // Get the filtered repository list.
         [HttpGet]
-        [Route("Repository/Filter")]
+        [Route("Filter")]
         public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
             var l = context.DocumentVersionHistories
@@ -60,7 +60,14 @@ namespace IntelliDoc_API.Controllers
             return Ok(l);
         }
 
-        // Get
+        // Get the list of version history of a repository document.
+        [HttpGet]
+        [Route("VersionHistory/{DocId}")]
+        public IActionResult GetDocumentVersionHistory(int docId)
+        {
+            var l = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false).ToList();
+            return Ok(l);
+        }
 
         // Get the document attachment.
         [HttpGet]

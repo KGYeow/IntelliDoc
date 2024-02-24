@@ -14,6 +14,7 @@ export interface menu {
   type?: string;
   subCaption?: string;
   auth?: boolean;
+  accessName?: string;
 }
 
 const sidebarItem: menu[] = [
@@ -22,7 +23,8 @@ const sidebarItem: menu[] = [
     title: 'Dashboard',
     icon: tablerIcon.LayoutDashboardIcon,
     to: '/dashboard',
-    auth: true
+    auth: true,
+    accessName: "Dashboard",
   },
   {
     title: 'Document',
@@ -32,13 +34,15 @@ const sidebarItem: menu[] = [
         title: 'Repository',
         icon: tablerIcon.BooksIcon,
         to: '/document/repository',
-        auth: true
+        auth: true,
+        accessName: "Repositories",
       },
       {
         title: 'Archive',
         icon: tablerIcon.ArchiveIcon,
         to: '/document/archive',
-        auth: true
+        auth: true,
+        accessName: "Archives",
       },
     ]
   },
@@ -51,9 +55,10 @@ const sidebarItem: menu[] = [
         icon: tablerIcon.UserCogIcon,
         to: "/configuration/user-settings",
         auth: true,
+        accessName: "UserSettings",
       },
     ]
   },
-];
+]
 
-export default sidebarItem;
+export default sidebarItem
