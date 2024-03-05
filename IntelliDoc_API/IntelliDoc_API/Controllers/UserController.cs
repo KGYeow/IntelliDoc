@@ -1,5 +1,5 @@
 ﻿using IntelliDoc_API.Authentication;
-using IntelliDoc_API.Dto;
+using IntelliDoc_API.Dto.User;
 using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +39,7 @@ namespace IntelliDoc_API.Controllers
         // Update the current logged-in user account information.
         [HttpPut]
         [Route("Me")]
-        public IActionResult MeUpdate([FromBody] UserMeEditDto dto)
+        public IActionResult MeUpdate([FromBody] ProfileEdit dto)
         {
             var user = userService.GetUser(User);
             user.Username = dto.Username;
@@ -55,7 +55,7 @@ namespace IntelliDoc_API.Controllers
         // Update the current logged-in user account profile photo.
         [HttpPut]
         [Route("Me/ProfilePhoto")]
-        public IActionResult MeUpdateProfilePhoto([FromBody] UserMeProfilePhotoDto dto)
+        public IActionResult MeUpdateProfilePhoto([FromBody] ProfilePhotoEdit dto)
         {
             var user = userService.GetUser(User);
             user.ProfilePhoto = dto.ProfilePhoto;
@@ -119,7 +119,7 @@ namespace IntelliDoc_API.Controllers
         // Update the specific user's account information.
         [HttpPut]
         [Route("Info/{UserId}/Edit")]
-        public IActionResult UserInfoUpdate(int userId, [FromBody] UserEditDto dto)
+        public IActionResult UserInfoUpdate(int userId, [FromBody] Edit dto)
         {
             var role = context.UserRoles.Where(a => a.Name == dto.Role).FirstOrDefault();
             var userInfo = context.Users.Where(a => a.Id == userId).FirstOrDefault();
@@ -142,29 +142,9 @@ namespace IntelliDoc_API.Controllers
         {
             var userInfo = context.Users.Where(a => a.Id == userId).FirstOrDefault();
             context.Users.Remove(userInfo);
-            context.SaveChanges();
+            context.SaveChanges();　
 
             return Ok(new Response { Status = "Success", Message = "User account deleted successfully" });
-        }
-
-        public class UserMeEditDto
-        {
-            public string Username { get; set; } = null!;
-            public string FullName { get; set; } = null!;
-            public string Email { get; set; } = null!;
-        }
-
-        public class UserMeProfilePhotoDto
-        {
-            public byte[] ProfilePhoto { get; set; } = null!;
-        }
-
-        public class UserEditDto
-        {
-            public string Username { get; set; } = null!;
-            public string FullName { get; set; } = null!;
-            public string Email { get; set; } = null!;
-            public string Role { get; set; } = null!;
         }
     }
 }

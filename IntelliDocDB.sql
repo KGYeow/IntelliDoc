@@ -91,6 +91,8 @@ CREATE TABLE [dbo].[Document](
 	[CategoryID] [int] NOT NULL,
 	[CreatedByID] [int] NOT NULL,
 	[CreatedDate] [datetime] NOT NULL,
+	[ModifiedByID] [int] NOT NULL,
+	[ModifiedDate] [datetime] NOT NULL,
 	[HaveArchivedDocVersion] [bit] NOT NULL,
 	[IsAllVersionsArchived] [bit] NOT NULL,
  CONSTRAINT [PK_Document] PRIMARY KEY CLUSTERED 
@@ -151,7 +153,7 @@ SET IDENTITY_INSERT [dbo].[Page] ON
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (1, N'Dashboard', N'Dashboard')
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (2, N'Repository', N'Repository')
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (3, N'Archive', N'Archive')
-INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (4, N'User Settings', N'UserSettings')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (4, N'User Setting', N'UserSetting')
 SET IDENTITY_INSERT [dbo].[Page] OFF
 GO
 
@@ -211,10 +213,15 @@ REFERENCES [dbo].[DocumentCategory] ([ID])
 GO
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_DocumentCategory]
 GO
-ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_User] FOREIGN KEY([CreatedByID])
+ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_CreatedByUser] FOREIGN KEY([CreatedByID])
 REFERENCES [dbo].[User] ([ID])
 GO
-ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_User]
+ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_CreatedByUser]
+GO
+ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_ModifiedByUser] FOREIGN KEY([ModifiedByID])
+REFERENCES [dbo].[User] ([ID])
+GO
+ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_ModifiedByUser]
 GO
 
 ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_Document] FOREIGN KEY([DocumentID])

@@ -30,31 +30,26 @@ namespace IntelliDoc_API.Controllers
 
         // Get the filtered repository list.
         [HttpGet]
-        [Route("Filter")]
+        [Route("Filter")]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
         public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
-            var l = context.DocumentVersionHistories
-                .Include(a => a.Document).Include(a => a.Document.Category).Include(a => a.Document.CreatedBy)
-                .Where(a => a.Document.IsAllVersionsArchived == false)
-                .GroupBy(a => a.DocumentId)
-                .Select(group => group.OrderByDescending(a => a.Id).FirstOrDefault())
+            var l = context.Documents
+                .Include(a => a.Category).Include(a => a.ModifiedBy)
+                .Where(a => a.IsAllVersionsArchived == false)
                 .Select(x => new
                 {
-                    id = x.DocumentId,
-                    name = x.Document.Name,
-                    category = x.Document.Category.Name,
-                    modifiedById = x.UpdatedById == null ? x.Document.CreatedById : x.UpdatedById,
-                    modifiedBy = x.UpdatedById == null ? x.Document.CreatedBy : x.UpdatedBy,
-                    modifiedDate = x.UpdatedById == null ? x.Document.CreatedDate : x.UpdatedDate,
-                    type = x.Type
+                    id = x.Id,
+                    name = x.Name,
+                    category = x.Category.Name,
+                    modifiedById = x.ModifiedById,
+                    modifiedBy = x.ModifiedBy.FullName,
+                    modifiedDate = x.ModifiedDate,
                 });
 
             if (dto.DocId != null)
                 l = l.Where(a => a.id == dto.DocId);
             if (dto.Category != null)
                 l = l.Where(a => a.category == dto.Category);
-            if (dto.Type != null)
-                l = l.Where(a => a.type == dto.Type);
             l.ToList();
 
             return Ok(l);
@@ -84,7 +79,7 @@ namespace IntelliDoc_API.Controllers
             if (document == null)
                 throw new Exception("The document is not found in the system!");
 
-            return Ok(document.Attachment);
+            return Ok(new { document.Attachment, document.Type });
         }
 
         // Upload and create the new document.
@@ -93,20 +88,20 @@ namespace IntelliDoc_API.Controllers
         public IActionResult Create([FromBody] RepositoryCreate dto)
         {
             var user = userService.GetUser(User);
-            var existingDoc = context.Documents.Where(a => a.Name == dto.DocName).Any();
+            var existingDoc = context.Documents.Where(a => a.Name == dto.Name).Any();
 
             if (existingDoc)
                 throw new Exception("The document name already exists");
 
-            var category = context.DocumentCategories.Where(a => a.Name == dto.Category).FirstOrDefault();
-
             var document = new Document
             {
-                Name = dto.DocName,
-                CategoryId = category.Id,
+                Name = dto.Name,
+                CategoryId = 1,
                 CreatedById = user.Id,
                 CreatedDate = DateTime.Now,
-                HaveArchivedDocVersion = false,
+                ModifiedById = user.Id,
+                ModifiedDate = DateTime.Now,
+                HaveArchivedDocVersion = false, 
                 IsAllVersionsArchived = false
             };
             context.Documents.Add(document);
@@ -143,6 +138,12 @@ namespace IntelliDoc_API.Controllers
                 newVersion = $"{++major}.0";
             else
                 newVersion = $"{major}.{++minor}";
+
+            var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            existingDoc.ModifiedById = user.Id;
+            existingDoc.ModifiedDate = DateTime.Now;
+            context.Documents.Update(existingDoc);
+            context.SaveChanges();
 
             var versionHistory = new DocumentVersionHistory
             {

@@ -6,7 +6,7 @@
         <v-container fluid class="page-wrapper">
           <LayoutFullBreadcrumbs/>
           <div class="maxWidth">
-            <RouterView/>
+            <NuxtPage/>
           </div>
         </v-container>
       </v-main>

@@ -48,6 +48,10 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
+                entity.Property(e => e.ModifiedById).HasColumnName("ModifiedByID");
+
+                entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+
                 entity.Property(e => e.Name).IsUnicode(false);
 
                 entity.HasOne(d => d.Category)
@@ -57,10 +61,16 @@ namespace IntelliDoc_API.Models
                     .HasConstraintName("FK_Document_DocumentCategory");
 
                 entity.HasOne(d => d.CreatedBy)
-                    .WithMany(p => p.Documents)
+                    .WithMany(p => p.DocumentCreatedBies)
                     .HasForeignKey(d => d.CreatedById)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Document_User");
+                    .HasConstraintName("FK_Document_CreatedByUser");
+
+                entity.HasOne(d => d.ModifiedBy)
+                    .WithMany(p => p.DocumentModifiedBies)
+                    .HasForeignKey(d => d.ModifiedById)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Document_ModifiedByUser");
             });
 
             modelBuilder.Entity<DocumentCategory>(entity =>
