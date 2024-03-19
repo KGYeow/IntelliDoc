@@ -161,6 +161,26 @@ namespace IntelliDoc_API.Controllers
             return Ok(new Response { Status = "Success", Message = "Existing document updated successfully" });
         }
 
+        // Rename the existing document.
+        [HttpPut]
+        [Route("Rename/{DocId}")]
+        public IActionResult Rename(int docId, [FromQuery] string name)
+        {
+            var user = userService.GetUser(User);
+            var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+
+            if (existingDoc.Name == name)
+                throw new Exception("The new document name is the same as the old");
+            else
+            {
+                existingDoc.Name = name;
+                context.Documents.Update(existingDoc);
+                context.SaveChanges();
+
+                return Ok(new Response { Status = "Success", Message = "Existing document renamed successfully" });
+            }
+        }
+
         // Archive the existing document or its specific version.
         [HttpPut]
         [Route("Archive/{DocId}/{Version}")]

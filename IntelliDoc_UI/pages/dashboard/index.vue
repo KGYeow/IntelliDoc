@@ -2,8 +2,6 @@
   <!-- Dashboard Items -->
   <v-row>
     <v-col cols="12">
-      <!-- Sales overview -->
-      <DashboardSalesOverview />
     </v-col>
   </v-row>
 </template>

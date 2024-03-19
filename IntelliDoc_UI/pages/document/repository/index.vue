@@ -32,6 +32,18 @@
               </template>
             </v-select>
           </v-col>
+          <v-col>
+            <!-- Add New Document -->
+            <v-file-input
+              class="d-none"
+              ref="addDocInput"
+              v-model:model-value="addDocInfo.attachmentInfo"
+              @update:model-value="addDoc"
+              :accept="`application/pdf, .doc,.docx,.xml, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel`"
+              hide-details
+            />
+            <v-btn class="float-end" color="primary" prepend-icon="mdi-file-document-plus-outline" flat @click="addDocInput.click()">New Document</v-btn>
+          </v-col>
         </v-row>
 
         <!-- Document List Table -->
@@ -58,11 +70,11 @@
                     </li>
                     <li>
                       <v-tooltip text="Update" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-upload-outline" size="small" variant="text" @click="getEditAttachmentInfo(item.id)"/>
+                      <v-btn icon="mdi-upload-outline" size="small" variant="text" @click="selectDoc('Update', item)"/>
                     </li>
                     <li>
-                      <v-tooltip text="Edit Info" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-file-edit-outline" size="small" variant="text" @click="getEditDocInfo(item.id, item.name, item.categoryId, item.caseId)"/>
+                      <v-tooltip text="Rename" activator="parent" location="top" offset="2"/>
+                      <v-btn icon="mdi-pencil-outline" size="small" variant="text" @click="selectDoc('Rename', item)"/>
                     </li>
                     <li>
                       <v-tooltip text="Archive" activator="parent" location="top" offset="2"/>
@@ -90,7 +102,7 @@
                 <el-pagination
                   layout="total, prev, pager, next"
                   v-model:current-page="currentPage"
-                  :page-size="docList.length/pageCount()"
+                  :page-size="docList.length/pageCount()" 
                   :total="docList.length"
                 />
               </div>
@@ -101,36 +113,19 @@
     </v-col>
   </v-row>
 
-  <!-- Add New Document Button -->
-  <el-affix
-    class="position-absolute"
-    position="bottom"
-    :offset="30"
-    style="right: 30px; bottom: 100px;"
-  >
-    <v-tooltip text="Upload Document" activator="parent" location="left" offset="2"/>
-    <v-btn icon="mdi-file-document-plus-outline" color="primary" size="large" @click="addDocModal = true"/>
-  </el-affix>
-
-  <!-- Add New Document Modal -->
-  <SharedUiModal v-model="addDocModal" title="Add New Document" width="500">
-    <DocumentCreateForm @close-modal="(e) => addDocModal = e"/>
-  </SharedUiModal>
-
   <!-- Edit Document Information Modal -->
-  <SharedUiModal v-model="editDocInfoModal" title="Edit Document Information" width="500">
-    <DocumentEditInfoForm
-      :edit-document-info="editDocInfoDetails"
-      :doc-category-list="filterOption.docCategoryList"
-      :case-list="caseList"
-      @close-modal="(e) => editDocInfoModal = e"
+  <SharedUiModal v-model="renameDocModal" title="Rename Document" width="500">
+    <DocumentRenameForm
+      :doc-id="selectedDocInfo.id"
+      :doc-name-old="selectedDocInfo.name"
+      @close-modal="(e) => renameDocModal = e"
     />
   </SharedUiModal>
 
   <!-- Edit Document Attachment Modal -->
-  <SharedUiModal v-model="editAttachmentModal" title="Update Document File" width="500">
+  <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
     <DocumentEditAttachmentForm
-      :document-id="editAttachmentInfoId"
+      :doc-id="selectedDocInfo.id"
       @close-modal="(e) => editAttachmentModal = e"
     />
   </SharedUiModal>
@@ -156,15 +151,18 @@ const filter = ref({
   docId: null,
   category: null,
 })
-const editDocInfoDetails = ref({
-  docId: null,
+const addDocInfo = ref({
   name: null,
-  categoryId: null,
-  caseId: null,
+  type: null,
+  attachment: null,
+  attachmentInfo: null,
 })
-const editAttachmentInfoId = ref(null)
-const addDocModal = ref(false)
-const editDocInfoModal = ref(false)
+const selectedDocInfo = ref({
+  id: null,
+  name: null,
+})
+const addDocInput = ref(null)
+const renameDocModal = ref(false)
 const editAttachmentModal = ref(false)
 const { data: filterOption } = await fetchData.$get("/Repository/FilterOption")
 const { data: docList } = await fetchData.$get("/Repository/Filter", filter.value)
@@ -193,16 +191,84 @@ definePageMeta({
 const pageCount = () => {
   return Math.ceil(docList.value.length / itemsPerPage.value)
 }
-const getEditDocInfo = (docId, name, categoryId, caseId) => {
-  editDocInfoDetails.value.docId = docId
-  editDocInfoDetails.value.name = name
-  editDocInfoDetails.value.categoryId = categoryId
-  editDocInfoDetails.value.caseId = caseId
-  editDocInfoModal.value = true
+const getFileType = (docName) => {
+  const extensions = {
+    "pdf": "PDF",
+    "doc": "Word",
+    "docx": "Word",
+    "xls": "Excel",
+    "xlsx": "Excel",
+  }
+  const extensionIndex = docName.lastIndexOf(".")
+  const ext = docName.slice(extensionIndex + 1) // Get the extension
+  return extensions[ext] || null // Check for extension in map, return null if not found
 }
-const getEditAttachmentInfo = (docId) => {
-  editAttachmentInfoId.value = docId
-  editAttachmentModal.value = true
+const addDoc = async() => {
+  const file = addDocInfo.value.attachmentInfo[0]
+  if (file)
+  {
+    const reader = new FileReader() // Read file as DataURL using a promise-based approach
+    reader.readAsDataURL(file)
+
+    try {
+      const base64Data = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+      })
+
+      addDocInfo.value.attachment = base64Data.replace(/^.+?;base64,/, '')
+      addDocInfo.value.name = file.name
+      addDocInfo.value.type = getFileType(file.name)
+
+      const fileSize = (addDocInfo.value.attachment.length * 3) / 4 / 1024 // Convert base64 size to KB
+      if (fileSize > 28000)
+        return ElNotification.warning({ message: "Document size cannot exceeds 28MB" })
+
+      if (getFileType(addDocInfo.value.name) == null)
+        return ElNotification.warning({ message: "The document type must be in PDF, Word, or Excel" })
+
+      try {
+        const result = await fetchData.$post("/Repository", {
+          name: addDocInfo.value.name,
+          attachment: addDocInfo.value.attachment,
+          type: addDocInfo.value.type,
+        })
+
+        if (!result.error) {
+          addDocInfo.value.name = null
+          addDocInfo.value.type = null
+          addDocInfo.value.attachment = null
+          addDocInfo.value.attachmentInfo = null
+          ElNotification.success({ message: result.message })
+          refreshNuxtData()
+        }
+        else {
+          ElNotification.error({ message: result.message })
+        }
+      } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
+
+    } catch(e) { ElNotification.error({ message: `Error reading file: ${e}` }) }
+  }
+  else {
+    addDocInfo.value.name = null
+    addDocInfo.value.type = null
+    addDocInfo.value.attachment = null
+    addDocInfo.value.attachmentInfo = null
+  }
+}
+const selectDoc = (action, doc) => {
+  selectedDocInfo.value.id = doc.id
+
+  if (action == "Rename") {
+    selectedDocInfo.value.name = doc.name
+    renameDocModal.value = true
+  }
+  else if (action == "Update") {
+    editAttachmentModal.value = true
+  }
+  else {
+    ElNotification.error({ message: "Undefined action performed" })
+  }
 }
 const downloadDoc = async(docId) => {
   const { data } = await fetchData.$get(`/Repository/GetAttachment/${docId}/Latest`)

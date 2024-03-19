@@ -27,6 +27,15 @@ namespace IntelliDoc_API.Controllers
             return Ok(l);
         }
 
+        // Get the user's role.
+        [HttpGet]
+        [Route("Role/{RoleId}")]
+        public IActionResult Role(int roleId)
+        {
+            var role = context.UserRoles.Where(a => a.Id == roleId).FirstOrDefault();
+            return Ok(role.Name);
+        }
+
         // Get the self user information.
         [HttpGet]
         [Route("Me")]

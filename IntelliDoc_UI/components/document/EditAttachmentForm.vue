@@ -31,7 +31,7 @@ import { useField, useForm } from 'vee-validate'
 
 // Properties, Emit & Model
 const props = defineProps({
-  documentId: Number,
+  docId: Number,
 })
 const emit = defineEmits(['close-modal'])
 
@@ -104,7 +104,7 @@ const uploadFile = async() => {
 const editAttachmentInfo = handleSubmit(async(values) => {
   try {
     const result = await fetchData.$put("/Document/Edit/Attachment", {
-      docId: props.documentId,
+      docId: props.docId,
       attachment: values.attachment,
       type: editAttachmentDetails.value.type,
       extension: editAttachmentDetails.value.extension

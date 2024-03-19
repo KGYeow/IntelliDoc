@@ -172,16 +172,16 @@ SET IDENTITY_INSERT [dbo].[RoleAccessPage] OFF
 GO
 
 SET IDENTITY_INSERT [dbo].[DocumentCategory] ON
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (1, N'Other Documents')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (2, N'Case Documents')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (3, N'Client Documents')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (4, N'Legal Research')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (5, N'Contracts and Agreements')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (6, N'Court Orders and Judgments')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (7, N'Financial Documents')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (8, N'Legal Forms')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (9, N'Regulatory Compliance Documents')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (10, N'Intellectual Property Documents')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (1, N'Business')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (2, N'Entertainment')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (3, N'Food')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (4, N'Graphics')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (5, N'Historical')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (6, N'Medical')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (7, N'Politics')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (8, N'Space')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (9, N'Sport')
+INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (10, N'Technologie')
 SET IDENTITY_INSERT [dbo].[DocumentCategory] OFF
 GO
 
