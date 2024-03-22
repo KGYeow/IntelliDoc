@@ -2,5 +2,14 @@
   .v-list-item {
     border-radius: 4px;
     margin-inline: 10px;
+    padding: 0 8px !important;
+
+    i {
+      font-size: 18px;
+    }
+  }
+
+  .v-list-item--density-compact, .v-list-item--one-line {
+    min-height: 32px;
   }
 }

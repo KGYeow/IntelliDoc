@@ -123,7 +123,7 @@ GO
 CREATE TABLE [dbo].[DocumentVersionHistory](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[DocumentID] [int] NOT NULL,
-	[Version] [varchar](50) NOT NULL,
+	[Version] [int] NOT NULL,
 	[UpdatedByID] [int] NULL,
 	[UpdatedDate] [datetime] NULL,
 	[ArchivedDate] [datetime] NULL,

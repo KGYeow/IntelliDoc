@@ -100,10 +100,6 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Version)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
                 entity.HasOne(d => d.Document)
                     .WithMany(p => p.DocumentVersionHistories)
                     .HasForeignKey(d => d.DocumentId)

@@ -4,6 +4,8 @@ using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.ML;
+using System.Xml.Linq;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -60,18 +62,28 @@ namespace IntelliDoc_API.Controllers
         [Route("VersionHistory/{DocId}")]
         public IActionResult GetDocumentVersionHistory(int docId)
         {
-            var l = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false).ToList();
+            var l = context.DocumentVersionHistories.Include(a => a.UpdatedBy)
+                .Where(d => d.DocumentId == docId && d.IsArchived == false)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    version = x.Version,
+                    updatedById = x.UpdatedById,
+                    updatedBy = x.UpdatedBy.FullName,
+                    updatedDate = x.UpdatedDate,
+                    type = x.Type,
+                }).ToList();
             return Ok(l);
         }
 
         // Get the document attachment.
         [HttpGet]
         [Route("GetAttachment/{DocId}/{Version}")]
-        public IActionResult GetDocumentAttachment(int docId, string version)
+        public IActionResult GetDocumentAttachment(int docId, int version)
         {
             var document = new DocumentVersionHistory();
 
-            if (version == "Latest")
+            if (version == 0) // Get the latest version
                 document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
             else
                 document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
@@ -85,13 +97,16 @@ namespace IntelliDoc_API.Controllers
         // Upload and create the new document.
         [HttpPost]
         [Route("")]
-        public IActionResult Create([FromBody] RepositoryCreate dto)
+        public IActionResult Create([FromBody] Create dto)
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(a => a.Name == dto.Name).Any();
 
             if (existingDoc)
                 throw new Exception("The document name already exists");
+
+            string modelDir = Path.Combine(Environment.CurrentDirectory, "intelligent_document_classification_model.pkl");
+            // ITransformer loadedModel = LogisticRegression.LoadFromModelFile(modelDir, context);
 
             var document = new Document
             {
@@ -110,7 +125,7 @@ namespace IntelliDoc_API.Controllers
             var versionHistory = new DocumentVersionHistory
             {
                 DocumentId = document.Id,
-                Version = "1.0",
+                Version = 1,
                 Attachment = dto.Attachment,
                 Type = dto.Type,
                 IsArchived = false
@@ -124,20 +139,10 @@ namespace IntelliDoc_API.Controllers
         // Edit and update the existing document.
         [HttpPut]
         [Route("{DocId}")]
-        public IActionResult Update(int docId, [FromBody] RepositoryUpdate dto)
+        public IActionResult Update(int docId, [FromBody] Update dto)
         {
             var user = userService.GetUser(User);
             var previousDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
-
-            string[] versionComponents = previousDocVersion.Version.Split('.');
-            int major = int.Parse(versionComponents[0]);
-            int minor = int.Parse(versionComponents[1]);
-
-            var newVersion = "";
-            if (dto.UpdateDegree == "Major")
-                newVersion = $"{++major}.0";
-            else
-                newVersion = $"{major}.{++minor}";
 
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
             existingDoc.ModifiedById = user.Id;
@@ -148,7 +153,7 @@ namespace IntelliDoc_API.Controllers
             var versionHistory = new DocumentVersionHistory
             {
                 DocumentId = previousDocVersion.DocumentId,
-                Version = newVersion,
+                Version = previousDocVersion.Version + 1,
                 UpdatedById = user.Id,
                 UpdatedDate = DateTime.Now,
                 Attachment = dto.Attachment,
@@ -163,8 +168,8 @@ namespace IntelliDoc_API.Controllers
 
         // Rename the existing document.
         [HttpPut]
-        [Route("Rename/{DocId}")]
-        public IActionResult Rename(int docId, [FromQuery] string name)
+        [Route("Rename/{DocId}/{Name}")]
+        public IActionResult Rename(int docId, string name)
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
@@ -184,13 +189,13 @@ namespace IntelliDoc_API.Controllers
         // Archive the existing document or its specific version.
         [HttpPut]
         [Route("Archive/{DocId}/{Version}")]
-        public IActionResult Archive(int docId, string version)
+        public IActionResult Archive(int docId, int version)
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
             existingDoc.HaveArchivedDocVersion = true;
 
-            if (version == "All")
+            if (version == 0) // All versions.
             {
                 existingDoc.IsAllVersionsArchived = true;
                 context.Documents.Update(existingDoc);

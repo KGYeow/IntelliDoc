@@ -39,7 +39,7 @@
               ref="addDocInput"
               v-model:model-value="addDocInfo.attachmentInfo"
               @update:model-value="addDoc"
-              :accept="`application/pdf, .doc,.docx,.xml, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel`"
+              :accept="`application/pdf, .doc,.docx,.xml, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document`"
               hide-details
             />
             <v-btn class="float-end" color="primary" prepend-icon="mdi-file-document-plus-outline" flat @click="addDocInput.click()">New Document</v-btn>
@@ -61,7 +61,7 @@
                 <td><a :href="`/documents/repositories/${item.id}`" target="_blank" class="row-link">{{ item.name }}</a></td>
                 <td>{{ item.category }}</td>
                 <td>{{ item.modifiedBy }}</td>
-                <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY") }}</td>
+                <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>
                 <td>
                   <ul class="m-0 list-inline hstack">
                     <li>
@@ -74,24 +74,22 @@
                     </li>
                     <li>
                       <v-tooltip text="Rename" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-pencil-outline" size="small" variant="text" @click="selectDoc('Rename', item)"/>
+                      <v-btn icon="mdi-rename-outline" size="small" variant="text" @click="selectDoc('Rename', item)"/>
                     </li>
                     <li>
-                      <v-tooltip text="Archive" activator="parent" location="top" offset="2"/>
-                      <el-popconfirm
-                        title="Are you sure to archive this document?"
-                        icon-color="orange"
-                        width="190"
-                        @confirm="archiveDoc(item.id)"
-                      >
-                        <template #reference>
-                          <v-btn icon="mdi-archive-outline" size="small" variant="text"/>
+                      <v-tooltip text="More Actions" activator="parent" location="top" offset="2"/>
+                      <v-menu width="220" location="left" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn id="more-actions" icon="mdi-dots-vertical" size="small" variant="text" v-bind="props"/>
                         </template>
-                      </el-popconfirm>
-                    </li>
-                    <li>
-                      <v-tooltip text="View Details" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-open-in-new" size="small" variant="text" :href="`/documents/repositories/${item.id}`"/>
+                        <v-list class="text-body-1" density="compact">
+                          <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item.id)">Download</v-list-item>
+                          <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
+                          <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
+                          <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
+                          <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
+                        </v-list>
+                      </v-menu>
                     </li>
                   </ul>
                 </td>
@@ -113,7 +111,7 @@
     </v-col>
   </v-row>
 
-  <!-- Edit Document Information Modal -->
+  <!-- Rename Document Modal -->
   <SharedUiModal v-model="renameDocModal" title="Rename Document" width="500">
     <DocumentRenameForm
       :doc-id="selectedDocInfo.id"
@@ -122,12 +120,14 @@
     />
   </SharedUiModal>
 
-  <!-- Edit Document Attachment Modal -->
+  <!-- Update Document Modal -->
   <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
-    <DocumentEditAttachmentForm
-      :doc-id="selectedDocInfo.id"
-      @close-modal="(e) => editAttachmentModal = e"
-    />
+    <DocumentUpdateForm :doc-id="selectedDocInfo.id" @close-modal="(e) => editAttachmentModal = e"/>
+  </SharedUiModal>
+
+  <!-- Version History Modal -->
+  <SharedUiModal v-model="versionHistoryModal" title="Document Version History" width="700">
+    <DocumentVersionHistory :doc-id="selectedDocInfo.id" @close-modal="(e) => versionHistoryModal = e"/>
   </SharedUiModal>
 </template>
 
@@ -164,6 +164,7 @@ const selectedDocInfo = ref({
 const addDocInput = ref(null)
 const renameDocModal = ref(false)
 const editAttachmentModal = ref(false)
+const versionHistoryModal = ref(false)
 const { data: filterOption } = await fetchData.$get("/Repository/FilterOption")
 const { data: docList } = await fetchData.$get("/Repository/Filter", filter.value)
 
@@ -196,8 +197,8 @@ const getFileType = (docName) => {
     "pdf": "PDF",
     "doc": "Word",
     "docx": "Word",
-    "xls": "Excel",
-    "xlsx": "Excel",
+    // "xls": "Excel",
+    // "xlsx": "Excel",
   }
   const extensionIndex = docName.lastIndexOf(".")
   const ext = docName.slice(extensionIndex + 1) // Get the extension
@@ -225,7 +226,7 @@ const addDoc = async() => {
         return ElNotification.warning({ message: "Document size cannot exceeds 28MB" })
 
       if (getFileType(addDocInfo.value.name) == null)
-        return ElNotification.warning({ message: "The document type must be in PDF, Word, or Excel" })
+        return ElNotification.warning({ message: "The document type must be in PDF or Word" })
 
       try {
         const result = await fetchData.$post("/Repository", {
@@ -266,12 +267,15 @@ const selectDoc = (action, doc) => {
   else if (action == "Update") {
     editAttachmentModal.value = true
   }
+  else if (action = "VersionHistory") {
+    versionHistoryModal.value = true
+  }
   else {
     ElNotification.error({ message: "Undefined action performed" })
   }
 }
 const downloadDoc = async(docId) => {
-  const { data } = await fetchData.$get(`/Repository/GetAttachment/${docId}/Latest`)
+  const { data } = await fetchData.$get(`/Repository/GetAttachment/${docId}/0`)
   const mimeType = {
     "PDF": "application/pdf",
     "Word": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -33,7 +33,7 @@ namespace IntelliDoc_API.Controllers
         [Route("Filter")]
         public IActionResult GetFilteredArchive([FromQuery] RepositoryFilter dto)
         {
-            var l = context.Documents.Include(a => a.Category).Where(a => a.HaveArchivedDocVersion == false).OrderBy(a => a.Name)
+            var l = context.Documents.Include(a => a.Category).Where(a => a.HaveArchivedDocVersion == true).OrderBy(a => a.Name)
                 .Select(x => new { id = x.Id, name = x.Name, category = x.Category.Name });
 
             if (dto.DocId != null)
@@ -57,12 +57,12 @@ namespace IntelliDoc_API.Controllers
         // Restore the archived document or its specific version.
         [HttpPut]
         [Route("Restore/{DocId}/{Version}")]
-        public IActionResult Restore(int docId, string version)
+        public IActionResult Restore(int docId, int version)
         {
             var user = userService.GetUser(User);
             var archivedDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
             
-            if (version == "All")
+            if (version == 0) // All versions.
             {
                 archivedDoc.HaveArchivedDocVersion = false;
                 archivedDoc.IsAllVersionsArchived = false;

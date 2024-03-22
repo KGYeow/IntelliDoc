@@ -1,20 +1,22 @@
 <template>
   <form @submit.prevent="renameDoc">
-    <v-card-item class="px-8 py-4 text-body-1">
-      <v-row>
-        <v-col>
-          <v-label class="text-caption">Document Name</v-label>
-          <v-text-field
-            variant="outlined"
-            density="compact"
-            v-model="renameDocInfo.nameWithoutExt.value"
-            :suffix="renameDocInfo.extension"
-            :error-messages="renameDocInfo.nameWithoutExt.errorMessage"
-            hide-details="auto"
-          />
-        </v-col>
-      </v-row>
-    </v-card-item>
+    <v-card-text class="px-8 py-4">
+      <div class="text-body-1">
+        <v-row>
+          <v-col>
+            <v-label class="text-caption">Document Name</v-label>
+            <v-text-field
+              variant="outlined"
+              density="compact"
+              v-model="renameDocInfo.nameWithoutExt.value"
+              :suffix="renameDocInfo.extension"
+              :error-messages="renameDocInfo.nameWithoutExt.errorMessage"
+              hide-details="auto"
+            />
+          </v-col>
+        </v-row>
+      </div>
+    </v-card-text>
     <v-card-actions class="p-3 justify-content-end">
       <v-btn color="primary" type="submit">Submit</v-btn>
     </v-card-actions>
@@ -50,9 +52,7 @@ const renameDocInfo = ref({
 // Methods
 const renameDoc = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$put(`/Repository/Rename/${props.docId}`, {
-      name: `${values.nameWithoutExt}${renameDocInfo.value.extension}`,
-    })
+    const result = await fetchData.$put(`/Repository/Rename/${props.docId}/${values.nameWithoutExt}${renameDocInfo.value.extension}`)
     
     if (!result.error) {
       emit('close-modal', false)

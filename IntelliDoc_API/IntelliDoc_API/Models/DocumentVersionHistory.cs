@@ -7,7 +7,7 @@ namespace IntelliDoc_API.Models
     {
         public int Id { get; set; }
         public int DocumentId { get; set; }
-        public string Version { get; set; } = null!;
+        public int Version { get; set; }
         public int? UpdatedById { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public DateTime? ArchivedDate { get; set; }
