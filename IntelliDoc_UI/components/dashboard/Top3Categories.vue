@@ -4,7 +4,7 @@
       <div class="d-sm-flex align-center justify-space-between pt-sm-2">
         <v-card-title class="text-h5">Top 3 Most Frequent Categories</v-card-title>
       </div>
-      <v-row v-if="dashboardData.totalStoredDoc != 0">
+      <v-row v-if="props.totalStoredDoc != 0">
         <v-col cols="5" sm="12" class="pl-lg-0">
           <div class="d-flex align-center flex-shrink-0 justify-content-center">
             <apexchart class="pt-6" type="donut" height="185" :options="chartOptions" :series="Chart"/>
@@ -12,17 +12,17 @@
         </v-col>
         <v-col cols="7" sm="12">
           <div class="d-flex align-center mt-0">
-            <h6 class="text-subtitle-1 text-muted d-flex align-center" v-if="dashboardData.top3CategoriesFrequency[0] > 0">
+            <h6 class="text-subtitle-1 text-muted d-flex align-center" v-if="props.top3CategoriesFrequency[0] > 0">
               <v-icon icon="mdi mdi-checkbox-blank-circle" class="mr-1" size="10" color="primary"/>
-              {{ dashboardData.top3CategoriesName[0] }}
+              {{ props.top3CategoriesName[0] }}
             </h6>
-            <h6 class="text-subtitle-1 text-muted d-flex align-center pl-5" v-if="dashboardData.top3CategoriesFrequency[1] > 0">
+            <h6 class="text-subtitle-1 text-muted d-flex align-center pl-5" v-if="props.top3CategoriesFrequency[1] > 0">
               <v-icon icon="mdi mdi-checkbox-blank-circle" class="mr-1" size="10" color="lightprimary"/>
-              {{ dashboardData.top3CategoriesName[1] }}
+              {{ props.top3CategoriesName[1] }}
             </h6>
-            <h6 class="text-subtitle-1 text-muted d-flex align-center pl-5" v-if="dashboardData.top3CategoriesFrequency[2] > 0">
+            <h6 class="text-subtitle-1 text-muted d-flex align-center pl-5" v-if="props.top3CategoriesFrequency[2] > 0">
               <v-icon icon="mdi mdi-checkbox-blank-circle" class="mr-1" size="10" color="#F9F9FD"/>
-              {{ dashboardData.top3CategoriesName[2] }}
+              {{ props.top3CategoriesName[2] }}
             </h6>
           </div>
         </v-col>
@@ -38,16 +38,22 @@
 
 <script setup>
 import { useTheme } from 'vuetify'
-import * as dashboardData from '@/data/dashboard/dashboardData'
+
+// Properties
+const props = defineProps({
+  totalStoredDoc: { type: Number },
+  top3CategoriesName: { type: Array },
+  top3CategoriesFrequency: { type: Array },
+})
 
 // Data
 const theme = useTheme()
 const primary = theme.current.value.colors.primary
 const lightprimary = theme.current.value.colors.lightprimary
-const Chart = dashboardData.top3CategoriesFrequency
+const Chart = props.top3CategoriesFrequency
 const chartOptions = computed(() => {
   return {
-    labels: dashboardData.top3CategoriesName,
+    labels: props.top3CategoriesName,
     chart: {
       type: 'donut',
       fontFamily: `inherit`,

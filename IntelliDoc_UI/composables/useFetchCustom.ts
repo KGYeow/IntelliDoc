@@ -11,7 +11,7 @@ async function fetchResult(url: string, method: any, body: any = null) {
   })
 }
 
-export const fetchData = {
+export const useFetchCustom = {
   $post(requestURL: string, body: {}) {
     return fetchResult(requestURL, 'POST', body)
   },
@@ -20,6 +20,13 @@ export const fetchData = {
   },
   $get(requestURL: string, params: {} = {}) {
     return useFetch(baseURL + requestURL, {
+      headers: { 'Authorization': `${useAuth().token.value}` },
+      params: params,
+    })
+  },
+  $fetch(requestURL: string, params: {} = {}) {
+    return $fetch(baseURL + requestURL, {
+      method: 'GET',
       headers: { 'Authorization': `${useAuth().token.value}` },
       params: params,
     })

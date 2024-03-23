@@ -53,8 +53,8 @@ import sidebarItems from '@/data/sidebarItem';
 
 // Data
 const sDrawer = ref(true);
-const accessList = await fetchData.$get(`/Page/AccessPageList/${useAuth().data.value.id}`)
-const filteredSidebarMenu = filterSidebarItems(accessList.data.value, sidebarItems)
+const { data: accessList } = await useFetchCustom.$get(`/Page/AccessPageList/${useAuth().data.value.id}`)
+const filteredSidebarMenu = filterSidebarItems(accessList.value, sidebarItems)
 
 // Functions
 function filterSidebarItems(accessPages, menuItems) {

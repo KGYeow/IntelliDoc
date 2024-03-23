@@ -17,7 +17,7 @@
         </v-row>
       </div>
     </v-card-text>
-    <v-card-actions class="p-3 justify-content-end">
+    <v-card-actions class="p-3 justify-content-end">  
       <v-btn color="primary" type="submit">Submit</v-btn>
     </v-card-actions>
   </form>
@@ -52,7 +52,7 @@ const renameDocInfo = ref({
 // Methods
 const renameDoc = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$put(`/Repository/Rename/${props.docId}/${values.nameWithoutExt}${renameDocInfo.value.extension}`)
+    const result = await useFetchCustom.$put(`/Repository/Rename/${props.docId}/${values.nameWithoutExt}${renameDocInfo.value.extension}`)
     
     if (!result.error) {
       emit('close-modal', false)

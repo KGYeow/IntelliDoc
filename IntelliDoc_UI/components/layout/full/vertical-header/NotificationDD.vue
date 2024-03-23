@@ -93,13 +93,13 @@ import { BellRingingIcon } from 'vue-tabler-icons';
 
 // Data
 const showNotificationLog = ref(false)
-const { data: notifications } = await fetchData.$get("/Notification/UnreadList")
-const { data: notificationLog } = await fetchData.$get("/Notification/Log")
+const { data: notifications } = await useFetchCustom.$get("/Notification/UnreadList")
+const { data: notificationLog } = await useFetchCustom.$get("/Notification/Log")
 
 // Methods
 const readNotification = async(notificationId) => {
   try {
-    const result = await fetchData.$put(`/Notification/Read/${notificationId}`)
+    const result = await useFetchCustom.$put(`/Notification/Read/${notificationId}`)
     if (!result.error) {
       refreshNuxtData()
     }

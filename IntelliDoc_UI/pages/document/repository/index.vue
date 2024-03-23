@@ -51,39 +51,56 @@
           <v-data-table
             density="comfortable"
             v-model:page="currentPage"
-            :headers="headers"
+            :headers="[
+              { key: 'name', title: 'Name' },
+              { key: 'category', title: 'Category' },
+              { key: 'modifiedBy', title: 'Modified By' },
+              { key: 'modifiedDate', title: 'Modified Time' },
+              { key: 'actions', sortable: false, width: 0 },
+            ]"
             :items="docList"
             :items-per-page="itemsPerPage"
             hover
           >
-            <template #item="{ item }">
+            <template #item="{ item, index }">
               <tr>
-                <td><a :href="`/documents/repositories/${item.id}`" target="_blank" class="row-link">{{ item.name }}</a></td>
+                <td><a class="row-link">{{ item.name }}</a></td>
                 <td>{{ item.category }}</td>
                 <td>{{ item.modifiedBy }}</td>
                 <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>
                 <td>
                   <ul class="m-0 list-inline hstack">
                     <li>
-                      <v-tooltip text="Download" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-download-outline" size="small" variant="text" @click="downloadDoc(item.id)"/>
+                      <v-tooltip text="Download" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn icon="mdi-download-outline" size="small" variant="text" @click="downloadDoc(item)" :="props"/>
+                        </template>
+                      </v-tooltip>
                     </li>
                     <li>
-                      <v-tooltip text="Update" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-upload-outline" size="small" variant="text" @click="selectDoc('Update', item)"/>
+                      <v-tooltip text="Update" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn icon="mdi-upload-outline" size="small" variant="text" @click="selectDoc('Update', item)" :="props"/>
+                        </template>
+                      </v-tooltip>
                     </li>
                     <li>
-                      <v-tooltip text="Rename" activator="parent" location="top" offset="2"/>
-                      <v-btn icon="mdi-rename-outline" size="small" variant="text" @click="selectDoc('Rename', item)"/>
+                      <v-tooltip text="Rename" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn icon="mdi-rename-outline" size="small" variant="text" @click="selectDoc('Rename', item)" :="props"/>
+                        </template>
+                      </v-tooltip>
                     </li>
                     <li>
-                      <v-tooltip text="More Actions" activator="parent" location="top" offset="2"/>
                       <v-menu width="220" location="left" offset="2">
                         <template #activator="{ props }">
-                          <v-btn id="more-actions" icon="mdi-dots-vertical" size="small" variant="text" v-bind="props"/>
+                          <v-btn size="small" variant="text" :="props" icon>
+                            <v-icon icon="mdi-dots-vertical"/>
+                            <v-tooltip text="More Actions" location="top" offset="2" activator="parent"/>
+                          </v-btn>
                         </template>
-                        <v-list class="text-body-1" density="compact">
-                          <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item.id)">Download</v-list-item>
+                        <v-list class="text-body-1" density="compact" elevation="4">
+                          <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item)">Download</v-list-item>
                           <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
                           <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
@@ -122,12 +139,21 @@
 
   <!-- Update Document Modal -->
   <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
-    <DocumentUpdateForm :doc-id="selectedDocInfo.id" @close-modal="(e) => editAttachmentModal = e"/>
+    <DocumentUpdateForm
+      :doc-id="selectedDocInfo.id"
+      :doc-name="selectedDocInfo.name"
+      @close-modal="(e) => editAttachmentModal = e"
+    />
   </SharedUiModal>
 
   <!-- Version History Modal -->
   <SharedUiModal v-model="versionHistoryModal" title="Document Version History" width="700">
-    <DocumentVersionHistory :doc-id="selectedDocInfo.id" @close-modal="(e) => versionHistoryModal = e"/>
+    <DocumentRepositoryVersionHistory
+      :doc-id="selectedDocInfo.id"
+      :doc-name="selectedDocInfo.name"
+      :doc-type="selectedDocInfo.type"
+      @close-modal="(e) => versionHistoryModal = e"
+    />
   </SharedUiModal>
 </template>
 
@@ -140,13 +166,6 @@ import UiParentCard from '@/components/shared/UiParentCard.vue'
 // Data
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
-const headers = ref([
-  { key: "name", title: "Name" },
-  { key: "category", title: "Category" },
-  { key: "modifiedBy", title: "Modified By" },
-  { key: "modifiedDate", title: "Modified Time" },
-  { key: "actions", sortable: false, width: 0 },
-])
 const filter = ref({
   docId: null,
   category: null,
@@ -160,13 +179,14 @@ const addDocInfo = ref({
 const selectedDocInfo = ref({
   id: null,
   name: null,
+  type: null,
 })
 const addDocInput = ref(null)
 const renameDocModal = ref(false)
 const editAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
-const { data: filterOption } = await fetchData.$get("/Repository/FilterOption")
-const { data: docList } = await fetchData.$get("/Repository/Filter", filter.value)
+const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
+const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
 
 // Head
 useHead({
@@ -189,6 +209,10 @@ definePageMeta({
 })
 
 // Methods
+function getFileExtension (docName) {
+  const extensionIndex = docName.lastIndexOf(".")
+  return docName.slice(extensionIndex + 1) // Get the extension
+}
 const pageCount = () => {
   return Math.ceil(docList.value.length / itemsPerPage.value)
 }
@@ -197,11 +221,10 @@ const getFileType = (docName) => {
     "pdf": "PDF",
     "doc": "Word",
     "docx": "Word",
-    // "xls": "Excel",
-    // "xlsx": "Excel",
+    "xls": "Excel",
+    "xlsx": "Excel",
   }
-  const extensionIndex = docName.lastIndexOf(".")
-  const ext = docName.slice(extensionIndex + 1) // Get the extension
+  const ext = getFileExtension(docName)
   return extensions[ext] || null // Check for extension in map, return null if not found
 }
 const addDoc = async() => {
@@ -229,7 +252,7 @@ const addDoc = async() => {
         return ElNotification.warning({ message: "The document type must be in PDF or Word" })
 
       try {
-        const result = await fetchData.$post("/Repository", {
+        const result = await useFetchCustom.$post("/Repository", {
           name: addDocInfo.value.name,
           attachment: addDocInfo.value.attachment,
           type: addDocInfo.value.type,
@@ -259,45 +282,47 @@ const addDoc = async() => {
 }
 const selectDoc = (action, doc) => {
   selectedDocInfo.value.id = doc.id
+  selectedDocInfo.value.name = doc.name
 
   if (action == "Rename") {
-    selectedDocInfo.value.name = doc.name
     renameDocModal.value = true
   }
   else if (action == "Update") {
     editAttachmentModal.value = true
   }
   else if (action = "VersionHistory") {
+    selectedDocInfo.value.type = doc.type
     versionHistoryModal.value = true
   }
   else {
     ElNotification.error({ message: "Undefined action performed" })
   }
 }
-const downloadDoc = async(docId) => {
-  const { data } = await fetchData.$get(`/Repository/GetAttachment/${docId}/0`)
+const downloadDoc = async(doc) => {
+  const attachment = await useFetchCustom.$fetch(`/Repository/GetAttachment/${doc.id}/0`)
   const mimeType = {
     "PDF": "application/pdf",
     "Word": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "Excel": "application/vnd.ms-excel",
   }
-  const arrayBuffer = Buffer.from(data.value.attachment, 'base64');
-  const blob = new Blob([arrayBuffer], { type: mimeType[data.value.type] })
+  const arrayBuffer = Buffer.from(attachment, 'base64');
+  const blob = new Blob([arrayBuffer], { type: mimeType[doc.type] })
   const url = URL.createObjectURL(blob)
-
-  if (data.value.type == 'PDF')
+  
+  if (doc.type == 'PDF')
     window.open(url, '_blank')
   else {
     const link = document.createElement('a')
     link.href = url
-    link.download = docName
+    link.download = doc.name
     link.click()
+    document.body.appendChild(link)
     document.body.removeChild(link)
   }
 }
 const archiveDoc = async(docId) => {
   try {
-    const result = await fetchData.$put(`/Repository/Archive/${docId}`)
+    const result = await useFetchCustom.$put(`/Repository/Archive/${docId}/0`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

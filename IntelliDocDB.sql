@@ -93,6 +93,7 @@ CREATE TABLE [dbo].[Document](
 	[CreatedDate] [datetime] NOT NULL,
 	[ModifiedByID] [int] NOT NULL,
 	[ModifiedDate] [datetime] NOT NULL,
+	[Type] [varchar](10) NOT NULL,
 	[HaveArchivedDocVersion] [bit] NOT NULL,
 	[IsAllVersionsArchived] [bit] NOT NULL,
  CONSTRAINT [PK_Document] PRIMARY KEY CLUSTERED 
@@ -128,7 +129,6 @@ CREATE TABLE [dbo].[DocumentVersionHistory](
 	[UpdatedDate] [datetime] NULL,
 	[ArchivedDate] [datetime] NULL,
 	[Attachment] [varbinary](max) NOT NULL,
-	[Type] [varchar](10) NOT NULL,
 	[IsArchived] [bit] NOT NULL,
  CONSTRAINT [PK_DocumentVersionHistory] PRIMARY KEY CLUSTERED 
 (

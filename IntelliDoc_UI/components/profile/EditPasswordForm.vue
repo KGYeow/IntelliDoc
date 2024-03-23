@@ -81,7 +81,7 @@ const editPasswordCancel = () => {
 }
 const editPassword = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$put(`/User/Me/Password/${values.newPassword}`)
+    const result = await useFetchCustom.$put(`/User/Me/Password/${values.newPassword}`)
     if (!result.error) {
       isEdit.value = !isEdit.value
       editPasswordDetails.value.newPassword.resetField()

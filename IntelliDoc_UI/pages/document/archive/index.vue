@@ -6,7 +6,7 @@
           <!-- Filters -->
           <v-col class="pe-0" cols="3">
             <v-autocomplete
-              :items="archiveList"
+              :items="filterOption.docNameList"
               item-title="name"
               item-value="id"
               placeholder="Documents"
@@ -17,30 +17,18 @@
             />     
           </v-col>
           <v-col class="pe-0" cols="3">
-            <v-autocomplete
-              :items="caseList"
-              item-title="name"
-              item-value="id"
-              placeholder="Cases"
-              density="compact"
-              variant="outlined"
-              v-model="filter.caseId"
-              hide-details
-            />
-          </v-col>
-          <v-col class="pe-0" cols="2">
             <v-select
-              :items="categoryList"
+              :items="filterOption.docCategoryList"
               item-title="name"
-              item-value="id"
+              item-value="name"
               placeholder="Categories"
               density="compact"
               variant="outlined"
-              v-model="filter.categoryId"
+              v-model="filter.category"
               hide-details
             >     
               <template #prepend-item>
-                <v-list-item title="All Categories" @click="filter.categoryId = null"/>
+                <v-list-item title="All Categories" @click="filter.category = null"/>
               </template>
             </v-select>
           </v-col>
@@ -51,45 +39,55 @@
           <v-data-table
             density="comfortable"
             v-model:page="currentPage"
-            :headers="headers"
-            :items="archiveFilterList"
+            :headers="[
+              { key: 'name', title: 'Name' },
+              { key: 'category', title: 'Category' },
+              { key: 'actions', sortable: false, width: 0 },
+            ]"
+            :items="archiveList"
             :items-per-page="itemsPerPage"
             hover
           >
             <template #item="{ item }">
               <tr>
-                <td>{{ item.name }}</td>
-                <td>{{ item.categoryName }}</td>
-                <td>{{ item.caseName ?? '-' }}</td>
-                <td>{{ item.modifiedBy }}</td>
-                <td>{{ dayjs(item.modifiedTime).format("DD MMM YYYY") }}</td>
+                <td><a class="row-link">{{ item.name }}</a></td>
+                <td>{{ item.category }}</td>
                 <td>
                   <ul class="m-0 list-inline hstack">
                     <li>
-                      <v-tooltip text="Restore" activator="parent" location="top" offset="2"/>
-                      <el-popconfirm
-                        title="Are you sure to restore this document?"
-                        icon-color="green"
-                        width="190"
-                        @confirm="restoreDocument(item.id)"
-                      >
-                        <template #reference>
-                          <v-btn icon="mdi-restore" size="small" variant="text"/>
+                      <v-tooltip text="Version History" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn icon="mdi-history" size="small" variant="text" @click="versionHistoryDoc(item.id)" :="props"/>
                         </template>
-                      </el-popconfirm>
+                      </v-tooltip>
                     </li>
                     <li>
-                      <v-tooltip text="Delete Forever" activator="parent" location="top" offset="2"/>
-                      <el-popconfirm
-                        title="Are you sure to delete this document forever?"
-                        icon-color="red"
-                        width="190"
-                        @confirm="deleteDocument(item.id)"
-                      >
-                        <template #reference>
-                          <v-btn icon="mdi-trash-can-outline" size="small" variant="text"/>
+                      <v-tooltip text="Restore" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <el-popconfirm
+                            title="Are you sure to restore this document?"
+                            icon-color="green"
+                            width="220"
+                            @confirm="restoreDoc(item.id)"
+                          >
+                            <template #reference><v-btn icon="mdi-restore" size="small" variant="text" :="props"/></template>
+                          </el-popconfirm>
                         </template>
-                      </el-popconfirm>
+                      </v-tooltip>
+                    </li>
+                    <li>
+                      <v-tooltip text="Delete Forever" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <el-popconfirm
+                            title="Are you sure to delete this document forever?"
+                            icon-color="red"
+                            width="220"
+                            @confirm="deleteDoc(item.id)"
+                          >
+                            <template #reference><v-btn icon="mdi-trash-can-outline" size="small" variant="text" :="props"/></template>
+                          </el-popconfirm>
+                        </template>
+                      </v-tooltip>
                     </li>
                   </ul>
                 </td>
@@ -100,8 +98,8 @@
                 <el-pagination
                   layout="total, prev, pager, next"
                   v-model:current-page="currentPage"
-                  :page-size="archiveFilterList.length/pageCount()"
-                  :total="archiveFilterList.length"
+                  :page-size="archiveList.length/pageCount()"
+                  :total="archiveList.length"
                 />
               </div>
             </template>
@@ -110,33 +108,31 @@
       </UiParentCard>
     </v-col>
   </v-row>
+
+  <!-- Version History Modal -->
+  <SharedUiModal v-model="versionHistoryModal" title="Document Version History" width="600">
+    <DocumentArchiveVersionHistory :doc-id="selectedDocInfo.id" @close-modal="(e) => versionHistoryModal = e"/>
+  </SharedUiModal>
 </template>
 
 <script setup>
 import { FileDescriptionIcon } from "vue-tabler-icons"
-import dayjs from 'dayjs'
 import UiParentCard from '@/components/shared/UiParentCard.vue'
 
 // Data
-const filter = ref({
-  docId: null,
-  categoryId: null,
-  caseId: null,
-})
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
-const headers = ref([
-  { key: "name", title: "Name" },
-  { key: "category", title: "Category" },
-  { key: "case", title: "Case" },
-  { key: "modifiedBy", title: "Modified By" },
-  { key: "modifiedTime", title: "Modified Time" },
-  { key: "actions", sortable: false, width: 0 },
-])
-const { data: caseList } = await fetchData.$get("/Case")
-const { data: categoryList } = await fetchData.$get("/Document/Category")
-const { data: archiveList } = await fetchData.$get("/Archive")
-const { data: archiveFilterList } = await fetchData.$get("/Archive/Filter", filter.value)
+const filter = ref({
+  docId: null,
+  category: null,
+})
+const selectedDocInfo = ref({
+  id: null,
+  name: null,
+})
+const versionHistoryModal = ref(false)
+const { data: filterOption } = await useFetchCustom.$get("/Archive/FilterOption")
+const { data: archiveList } = await useFetchCustom.$get("/Archive/Filter", filter.value)
 
 // Head
 useHead({
@@ -160,11 +156,15 @@ definePageMeta({
 
 // Methods
 const pageCount = () => {
-  return Math.ceil(archiveFilterList.value.length / itemsPerPage.value)
+  return Math.ceil(archiveList.value.length / itemsPerPage.value)
 }
-const restoreDocument = async(docId) => {
+const versionHistoryDoc = (docId) => {
+  selectedDocInfo.value.id = docId
+  versionHistoryModal.value = true
+}
+const restoreDoc = async(docId) => {
   try {
-    const result = await fetchData.$put(`/Archive/Restore/${docId}`)
+    const result = await useFetchCustom.$put(`/Archive/Restore/${docId}/0`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()
@@ -174,9 +174,9 @@ const restoreDocument = async(docId) => {
     }
   } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
 }
-const deleteDocument = async(docId) => {
+const deleteDoc = async(docId) => {
   try {
-    const result = await fetchData.$delete(`/Archive/${docId}`)
+    const result = await useFetchCustom.$delete(`/Archive/Delete/${docId}/0`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

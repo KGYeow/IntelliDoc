@@ -14,7 +14,7 @@
               :error-messages="editAttachmentDetails.attachment.errorMessage"
               v-model:model-value="editAttachmentDetails.attachmentInfo"
               @update:model-value="uploadFile"
-              messages="PDF/word files with a size less than 28MB"
+              messages="Document files with a size less than 28MB"
               hide-details="auto"
               show-size
             />
@@ -34,10 +34,12 @@ import { useField, useForm } from 'vee-validate'
 // Properties, Emit & Model
 const props = defineProps({
   docId: Number,
+  docName: String,
 })
 const emit = defineEmits(['close-modal'])
 
 // Data
+const currentFileExtension = getFileExtension(props.docName)
 const { handleSubmit } = useForm({
   validationSchema: {
     attachment(value) {
@@ -48,15 +50,15 @@ const { handleSubmit } = useForm({
       if (fileSize > 28000)
         return 'Document size cannot exceeds 28MB'
 
-      const fileType = getFileType(editAttachmentDetails.value.attachmentInfo[0].name)
-      return fileType ? true : 'The document type must be in PDF or Word'
+      const fileExtension = getFileExtension(editAttachmentDetails.value.attachmentInfo[0].name)
+      return fileExtension == currentFileExtension  ? true : `The updated document is ${currentFileExtension} file format`
     }
   }
 })
 const editAttachmentDetails = ref({
   attachmentInfo: null,
   attachment: useField('attachment'),
-  type: null,
+  extension: null,
 })
 const acceptedDocInput = ref(
   `application/pdf,
@@ -66,17 +68,9 @@ const acceptedDocInput = ref(
 `)
 
 // Methods
-const getFileType = (docName) => {
-  const extensions = {
-    "pdf": "PDF",
-    "doc": "Word",
-    "docx": "Word",
-    // "xls": "Excel",
-    // "xlsx": "Excel",
-  }
+function getFileExtension (docName) {
   const extensionIndex = docName.lastIndexOf(".")
-  const ext = docName.slice(extensionIndex + 1) // Get the extension
-  return extensions[ext] || null // Check for extension in map, return null if not found
+  return docName.slice(extensionIndex + 1) // Get the extension
 }
 const uploadFile = async() => {
   const file = editAttachmentDetails.value.attachmentInfo[0]
@@ -90,27 +84,27 @@ const uploadFile = async() => {
         reader.onerror = reject
       })
       editAttachmentDetails.value.attachment.value = base64Data.replace(/^.+?;base64,/, '')
-      editAttachmentDetails.value.type = getFileType(file.name)
+      editAttachmentDetails.value.extension = getFileExtension(file.name)
     } catch(e) { ElNotification.error({ message: `Error reading file: ${e}` }) }
   }
   else
   {
-    editAttachmentDetails.value.type = null
+    editAttachmentDetails.value.extension = null
     editAttachmentDetails.value.attachment.value = null
   }
 }
 const updateDoc = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$put(`/Repository/${props.docId}`, {
+    const result = await useFetchCustom.$put(`/Repository/${props.docId}`, {
       attachment: values.attachment,
-      type: editAttachmentDetails.value.type,
     })
     
     if (!result.error) {
       emit('close-modal', false)
       editAttachmentDetails.value.attachment.resetField()
-      editAttachmentDetails.value.type = null
       editAttachmentDetails.value.attachmentInfo = null
+      editAttachmentDetails.value.extension = null
+      
       ElNotification.success({ message: result.message })
       refreshNuxtData()
     }

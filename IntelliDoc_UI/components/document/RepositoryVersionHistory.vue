@@ -8,9 +8,11 @@
           { key: 'version', title: 'Version' },
           { key: 'updatedBy', title: 'Updated By' },
           { key: 'updatedDate', title: 'Updated Time' },
-          { key: 'type', title: 'Type' },
           { key: 'actions', sortable: false, width: 0 },
         ]"
+        :sort-by="[{ key: 'version', order: 'desc' }]"
+        sort-desc-icon="mdi-arrow-down-thin"
+        sort-asc-icon="mdi-arrow-up-thin"
         :items="docVersionHistory"
         :items-per-page="itemsPerPage"
         hover
@@ -20,16 +22,21 @@
             <td>{{ item.version }}</td>
             <td>{{ item.updatedBy ?? "-" }}</td>
             <td>{{ item.updatedDate ? dayjs(item.updatedDate).format("DD MMM YYYY, hh:mm A") : "-" }}</td>
-            <td>{{ item.type }}</td>
             <td>
               <ul class="m-0 list-inline hstack">
                 <li>
-                  <v-tooltip text="Download" activator="parent" location="top" offset="2"/>
-                  <v-btn icon="mdi-download-outline" size="small" variant="text" @click="downloadDoc(item.version)"/>
+                  <v-tooltip text="Download" location="top" offset="2">
+                    <template #activator="{ props }">
+                      <v-btn icon="mdi-download-outline" size="small" variant="text" @click="downloadDocVersion(item.version)" :="props"/>
+                    </template>
+                  </v-tooltip>
                 </li>
                 <li>
-                  <v-tooltip text="Archive" activator="parent" location="top" offset="2"/>
-                  <v-btn icon="mdi-archive-outline" size="small" variant="text" @click="archiveDoc(item.id)"/>
+                  <v-tooltip text="Archive" location="top" offset="2">
+                    <template #activator="{ props }">
+                      <v-btn icon="mdi-archive-outline" size="small" variant="text" @click="archiveDocVersion(item.version)" :="props"/>
+                    </template>
+                  </v-tooltip>
                 </li>
               </ul>
             </td>
@@ -60,37 +67,52 @@ import dayjs from 'dayjs'
 // Properties, Emit & Model
 const props = defineProps({
   docId: Number,
+  docName: String,
+  docType: String,
 })
 const emit = defineEmits(['close-modal'])
 
 // Data
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
-const { data: docVersionHistory } = await fetchData.$get(`/Repository/VersionHistory/${props.docId}`)
+const { data: docVersionHistory } = await useFetchCustom.$get(`/Repository/VersionHistory/${props.docId}`)
 
 // Methods
 const pageCount = () => {
   return Math.ceil(docVersionHistory.value.length / itemsPerPage.value)
 }
-const downloadDoc = async(docVersion) => {
-  const { data } = await fetchData.$get(`/Repository/GetAttachment/${props.docId}/${docVersion}`)
+const downloadDocVersion = async(docVersion) => {
+  const attachment = await useFetchCustom.$fetch(`/Repository/GetAttachment/${props.docId}/${docVersion}`)
   const mimeType = {
     "PDF": "application/pdf",
     "Word": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "Excel": "application/vnd.ms-excel",
   }
-  const arrayBuffer = Buffer.from(data.value.attachment, 'base64');
-  const blob = new Blob([arrayBuffer], { type: mimeType[data.value.type] })
+  const arrayBuffer = Buffer.from(attachment, 'base64');
+  const blob = new Blob([arrayBuffer], { type: mimeType[props.docType] })
   const url = URL.createObjectURL(blob)
 
-  if (data.value.type == 'PDF')
+  if (props.docType == 'PDF')
     window.open(url, '_blank')
   else {
     const link = document.createElement('a')
     link.href = url
-    link.download = docName
+    link.download = props.docName
     link.click()
+    document.body.appendChild(link)
     document.body.removeChild(link)
   }
+}
+const archiveDocVersion = async(docVersion) => {
+  try {
+    const result = await useFetchCustom.$put(`/Repository/Archive/${props.docId}/${docVersion}`)
+    if (!result.error) {
+      ElNotification.success({ message: result.message })
+      refreshNuxtData()
+    }
+    else {
+      ElNotification.error({ message: result.message })
+    }
+  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
 }
 </script>

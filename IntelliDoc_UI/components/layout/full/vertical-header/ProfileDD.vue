@@ -26,7 +26,7 @@ import { Buffer } from 'buffer'
 
 // Data
 const { signOut } = useAuth()
-const { data: user } = await fetchData.$get("/User/Me")
+const { data: user } = await useFetchCustom.$get("/User/Me")
 
 // Methods
 const getProfilePhoto = (attachment) => {
@@ -36,7 +36,7 @@ const getProfilePhoto = (attachment) => {
 }
 const logout = async() => {
   try {
-    const result = await fetchData.$get("/Authenticate/Logout")
+    const result = await useFetchCustom.$get("/Authenticate/Logout")
     if (!result.error.value) {
       signOut({ callbackUrl: "/login", redirect: true })
       ElNotification.success({ message: "User logout successfully!" })

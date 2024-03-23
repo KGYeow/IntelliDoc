@@ -93,7 +93,7 @@ const registrationDetails = ref({
 // Methods
 const register = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$post("/Authenticate/Register", values)
+    const result = await useFetchCustom.$post("/Authenticate/Register", values)
     if (!result.error) {
       await signIn({
         username: values.username,

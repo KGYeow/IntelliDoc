@@ -120,7 +120,7 @@ const editUserCancel = () => {
 }
 const editUser = handleSubmit(async(values, { resetForm }) => {
   try {
-    const result = await fetchData.$put("/User/Me", values)
+    const result = await useFetchCustom.$put("/User/Me", values)
     if (!result.error) {
       isEdit.value = !isEdit.value
       resetForm({ values: values })

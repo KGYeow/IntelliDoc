@@ -17,6 +17,7 @@ namespace IntelliDoc_API.Models
         public DateTime CreatedDate { get; set; }
         public int ModifiedById { get; set; }
         public DateTime ModifiedDate { get; set; }
+        public string Type { get; set; } = null!;
         public bool HaveArchivedDocVersion { get; set; }
         public bool IsAllVersionsArchived { get; set; }
 

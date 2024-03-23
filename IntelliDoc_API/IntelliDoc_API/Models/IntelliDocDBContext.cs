@@ -54,6 +54,10 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.Name).IsUnicode(false);
 
+                entity.Property(e => e.Type)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.Documents)
                     .HasForeignKey(d => d.CategoryId)
@@ -91,10 +95,6 @@ namespace IntelliDoc_API.Models
                 entity.Property(e => e.ArchivedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DocumentId).HasColumnName("DocumentID");
-
-                entity.Property(e => e.Type)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
 
                 entity.Property(e => e.UpdatedById).HasColumnName("UpdatedByID");
 

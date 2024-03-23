@@ -21,7 +21,7 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetArchiveFilterOption()
         {
             var docNameList = context.Documents.Where(a => a.HaveArchivedDocVersion == true).ToList()
-                .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
+                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name });
             var docCategoryList = context.DocumentCategories.ToList()
                 .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
 
@@ -50,7 +50,14 @@ namespace IntelliDoc_API.Controllers
         [Route("VersionHistory/{DocId}")]
         public IActionResult GetDocumentVersionHistory(int docId)
         {
-            var l = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).ToList();
+            var l = context.DocumentVersionHistories
+                .Where(d => d.DocumentId == docId && d.IsArchived == true)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    version = x.Version,
+                    archivedDate = x.ArchivedDate,
+                }).ToList();
             return Ok(l);
         }
 
@@ -61,20 +68,20 @@ namespace IntelliDoc_API.Controllers
         {
             var user = userService.GetUser(User);
             var archivedDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
-            
+            archivedDoc.IsAllVersionsArchived = false;
+
             if (version == 0) // All versions.
             {
                 archivedDoc.HaveArchivedDocVersion = false;
-                archivedDoc.IsAllVersionsArchived = false;
                 context.Documents.Update(archivedDoc);
                 context.SaveChanges();
 
                 var archivedVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).ToList();
-                foreach (var versionHistory in archivedVersionHistories)
+                foreach (var archivedDocVersion in archivedVersionHistories)
                 {
-                    versionHistory.ArchivedDate = null;
-                    versionHistory.IsArchived = false;
-                    context.DocumentVersionHistories.Update(versionHistory);
+                    archivedDocVersion.ArchivedDate = null;
+                    archivedDocVersion.IsArchived = false;
+                    context.DocumentVersionHistories.Update(archivedDocVersion);
                     context.SaveChanges();
                 }
 
@@ -82,10 +89,10 @@ namespace IntelliDoc_API.Controllers
             }
             else
             {
-                var archivedVersionHistory = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
-                archivedVersionHistory.ArchivedDate = null;
-                archivedVersionHistory.IsArchived = false;
-                context.DocumentVersionHistories.Update(archivedVersionHistory);
+                var archivedDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
+                archivedDocVersion.ArchivedDate = null;
+                archivedDocVersion.IsArchived = false;
+                context.DocumentVersionHistories.Update(archivedDocVersion);
                 context.SaveChanges();
 
                 // If the all the versions are restored.
@@ -93,13 +100,63 @@ namespace IntelliDoc_API.Controllers
                 if (!isArchivedVersionExist)
                 {
                     archivedDoc.HaveArchivedDocVersion = false;
-                    archivedDoc.IsAllVersionsArchived = false;
-                    context.Documents.Update(archivedDoc);
-                    context.SaveChanges();
                 }
+                context.Documents.Update(archivedDoc);
+                context.SaveChanges();
 
                 return Ok(new Response { Status = "Success", Message = "Specific document version restored successfully" });
             }
+        }
+
+        // Delete the archived document or its specific version permanently.
+        [HttpDelete]
+        [Route("Delete/{DocId}/{Version}")]
+        public IActionResult DeletePermanently(int docId, int version)
+        {
+            var user = userService.GetUser(User);
+            var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            var archivedVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).ToList();
+            string msg;
+
+            if (version == 0) // All archived versions.
+            {
+                context.DocumentVersionHistories.RemoveRange(archivedVersionHistories);
+                context.SaveChanges();
+
+                existingDoc.HaveArchivedDocVersion = false;
+                existingDoc.IsAllVersionsArchived = false;
+                context.Documents.Update(existingDoc);
+                context.SaveChanges();
+
+                msg = "Archived document delete forever successfully";
+            }
+            else
+            {
+                var archivedDocVersion = archivedVersionHistories.Where(d => d.Version == version).FirstOrDefault();
+                context.DocumentVersionHistories.Remove(archivedDocVersion);
+                context.SaveChanges();
+
+                var isArchivedDocVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).Any();
+                if (!isArchivedDocVersionExist)
+                {
+                    existingDoc.HaveArchivedDocVersion = false;
+                    existingDoc.IsAllVersionsArchived = false;
+                    context.Documents.Update(existingDoc);
+                    context.SaveChanges();
+                }
+
+                msg = "Specific archived document version delete forever successfully";
+            }
+
+            var isDocVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).Any();
+            if (!isDocVersionExist)
+            {
+                existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+                context.Documents.Remove(existingDoc);
+                context.SaveChanges();
+            }
+
+            return Ok(new Response { Status = "Success", Message = msg });
         }
     }
 }

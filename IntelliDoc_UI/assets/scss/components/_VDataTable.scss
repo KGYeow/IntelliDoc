@@ -1,4 +1,8 @@
 .v-data-table {
+  .v-table__wrapper {
+    overflow: visible;
+  }
+
   th, td {
     padding: 0 10px !important;
   }

@@ -72,7 +72,7 @@ const loginDetails = ref({
 // Methods
 const login = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$post("/Authenticate/LoginInfo", values)
+    const result = await useFetchCustom.$post("/Authenticate/LoginInfo", values)
     if (!result.error) {
       await signIn(values, { callbackUrl: "/" })
       ElNotification.success({ message: result.message })

@@ -5,7 +5,6 @@ using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.ML;
-using System.Xml.Linq;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -23,7 +22,7 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetRepositoryFilterOption()
         {
             var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
-                .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
+                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name });
             var docCategoryList = context.DocumentCategories.ToList()
                 .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
 
@@ -46,6 +45,7 @@ namespace IntelliDoc_API.Controllers
                     modifiedById = x.ModifiedById,
                     modifiedBy = x.ModifiedBy.FullName,
                     modifiedDate = x.ModifiedDate,
+                    type = x.Type,
                 });
 
             if (dto.DocId != null)
@@ -71,7 +71,6 @@ namespace IntelliDoc_API.Controllers
                     updatedById = x.UpdatedById,
                     updatedBy = x.UpdatedBy.FullName,
                     updatedDate = x.UpdatedDate,
-                    type = x.Type,
                 }).ToList();
             return Ok(l);
         }
@@ -82,16 +81,17 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetDocumentAttachment(int docId, int version)
         {
             var document = new DocumentVersionHistory();
+            var documentVersions = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false).ToList();
 
             if (version == 0) // Get the latest version
-                document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
+                document = documentVersions.OrderByDescending(d => d.Id).FirstOrDefault();
             else
-                document = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
+                document = documentVersions.Where(d => d.Version == version).FirstOrDefault();
 
             if (document == null)
                 throw new Exception("The document is not found in the system!");
 
-            return Ok(new { document.Attachment, document.Type });
+            return Ok(document.Attachment);
         }
 
         // Upload and create the new document.
@@ -116,6 +116,7 @@ namespace IntelliDoc_API.Controllers
                 CreatedDate = DateTime.Now,
                 ModifiedById = user.Id,
                 ModifiedDate = DateTime.Now,
+                Type = dto.Type,
                 HaveArchivedDocVersion = false, 
                 IsAllVersionsArchived = false
             };
@@ -127,7 +128,6 @@ namespace IntelliDoc_API.Controllers
                 DocumentId = document.Id,
                 Version = 1,
                 Attachment = dto.Attachment,
-                Type = dto.Type,
                 IsArchived = false
             };
             context.DocumentVersionHistories.Add(versionHistory);
@@ -157,7 +157,6 @@ namespace IntelliDoc_API.Controllers
                 UpdatedById = user.Id,
                 UpdatedDate = DateTime.Now,
                 Attachment = dto.Attachment,
-                Type = dto.Type,
                 IsArchived = false
             };
             context.DocumentVersionHistories.Add(versionHistory);
@@ -215,14 +214,19 @@ namespace IntelliDoc_API.Controllers
             }
             else
             {
-
-                context.Documents.Update(existingDoc);
-                context.SaveChanges();
-
                 var existingVersionHistory = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.Version == version).FirstOrDefault();
                 existingVersionHistory.ArchivedDate = DateTime.Now;
                 existingVersionHistory.IsArchived = true;
                 context.DocumentVersionHistories.Update(existingVersionHistory);
+                context.SaveChanges();
+
+                // If the all the versions are archived.
+                var isNoArchivedVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false).Any();
+                if (!isNoArchivedVersionExist)
+                {
+                    existingDoc.IsAllVersionsArchived = true;
+                }
+                context.Documents.Update(existingDoc);
                 context.SaveChanges();
 
                 return Ok(new Response { Status = "Success", Message = "Specific document version archived successfully" });

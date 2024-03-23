@@ -15,7 +15,14 @@
 
 <script setup>
 import { useTheme } from 'vuetify'
-import * as dashboardData from '@/data/dashboard/dashboardData'
+
+// Properties
+const props = defineProps({
+  docCategory: { type: Array },
+  storedDocNum: { type: Array },
+  archivedDocNum: { type: Array },
+  yAxisMax: { type: Number, default: 10 },
+})
 
 // Data
 const theme = useTheme()
@@ -24,8 +31,8 @@ const secondary = theme.current.value.colors.secondary
 const chartOptions = computed(() => {
   return {
     series: [
-      { name: "Stored Document", data: dashboardData.storedDocNum },
-      { name: "Archived Document", data: dashboardData.archivedDocNum },
+      { name: "Stored Document", data: props.storedDocNum },
+      { name: "Archived Document", data: props.archivedDocNum },
     ],
     chartOptions: {
       grid: {
@@ -56,7 +63,7 @@ const chartOptions = computed(() => {
       legend: { show: true },
       xaxis: {
         type: "category",
-        categories: dashboardData.docCategory,
+        categories: props.docCategory,
         labels: {
           style: { cssClass: "grey--text lighten-2--text fill-color" },
         },
@@ -64,7 +71,7 @@ const chartOptions = computed(() => {
       yaxis: {
         show: true,
         min: 0,
-        max: dashboardData.yAxisMax,
+        max: props.yAxisMax,
         tickAmount: 4,
         labels: {
           style: {

@@ -56,8 +56,8 @@ import { Buffer } from 'buffer'
 
 // Data
 const tab = ref(null)
-const { data: user } = await fetchData.$get("/User/Me")
-const { data: userRole } = await fetchData.$get(`/User/Role/${user.value.userRoleId}`)
+const { data: user } = await useFetchCustom.$get("/User/Me")
+const { data: userRole } = await useFetchCustom.$get(`/User/Role/${user.value.userRoleId}`)
 
 // Head
 useHead({

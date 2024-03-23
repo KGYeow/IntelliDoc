@@ -14,8 +14,8 @@
         <v-col cols="12">
           <div class="mt-2">
             <h2 class="text-h2 text-truncate">
-              <v-tooltip :text="`${dashboardData.totalStoredDoc}`" activator="parent" location="bottom" offset="2"/>
-              {{ dashboardData.totalStoredDoc }}
+              <v-tooltip :text="`${props.totalStoredDoc}`" activator="parent" location="bottom" offset="2"/>
+              {{ props.totalStoredDoc }}
             </h2>
           </div>
         </v-col>
@@ -25,5 +25,8 @@
 </template>
 
 <script setup>
-import * as dashboardData from '@/data/dashboard/dashboardData'
+// Properties
+const props = defineProps({
+  totalStoredDoc: { type: Number },
+})
 </script>

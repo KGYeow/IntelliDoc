@@ -104,7 +104,7 @@ const uploadProfilePhoto = async(file) => {
 }
 const addProfilePhoto = handleSubmit(async(values) => {
   try {
-    const result = await fetchData.$put("/User/Me/ProfilePhoto", {
+    const result = await useFetchCustom.$put("/User/Me/ProfilePhoto", {
       profilePhoto: values.attachment
     })
 
@@ -123,7 +123,7 @@ const addProfilePhoto = handleSubmit(async(values) => {
 })
 const deleteProfilePhoto = async() => {
   try {
-    const result = await fetchData.$put("/User/Me/ProfilePhoto/Delete")
+    const result = await useFetchCustom.$put("/User/Me/ProfilePhoto/Delete")
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()
