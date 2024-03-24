@@ -2,8 +2,6 @@
 using IntelliDoc_API.Dto.User;
 using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,14 +15,37 @@ namespace IntelliDoc_API.Controllers
         {
         }
 
-        // Get the list of user accounts.
+        // Get the options for filters.
         [HttpGet]
-        [Route("")]
-        public IActionResult Get()
+        [Route("FilterOption")]
+        public IActionResult GetUserFilterOption()
+        {
+            var userNameList = context.Users.ToList().Select(x => new { id = x.Id, fullName = x.FullName });
+            return Ok(userNameList);
+        }
+
+        // Get the filtered list of user accounts.
+        [HttpGet]
+        [Route("Filter")]
+        public IActionResult GetFilteredUser([FromQuery] UserFilter dto)
         {
             var l = context.Users.Include(a => a.UserRole).ToList()
-                .Select(x => new { id = x.Id, username = x.Username, fullName = x.FullName, email = x.Email, role = x.UserRole?.Name });
+                .Select(x => new { id = x.Id, username = x.Username, fullName = x.FullName, email = x.Email, roleId = x.UserRoleId, role = x.UserRole?.Name, isActive = x.IsActive });
+
+            if (dto.UserId != null)
+                l = l.Where(a => a.id == dto.UserId);
+            l.ToList();
+
             return Ok(l);
+        }
+
+        // Get the list of user role.
+        [HttpGet]
+        [Route("RoleList")]
+        public IActionResult RoleList()
+        {
+            var roleList = context.UserRoles.ToList();
+            return Ok(roleList);
         }
 
         // Get the user's role.
@@ -43,6 +64,14 @@ namespace IntelliDoc_API.Controllers
         {
             var user = userService.GetUser(User);
             return Ok(user);
+        }
+
+        // Create a new user account.
+        [HttpPost]
+        [Route("")]
+        public IActionResult Create([FromBody] Create dto)
+        {
+            return Ok(new Response { Status = "Success", Message = "The user account has been created successfully" });
         }
 
         // Update the current logged-in user account information.

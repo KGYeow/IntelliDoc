@@ -21,7 +21,7 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetArchiveFilterOption()
         {
             var docNameList = context.Documents.Where(a => a.HaveArchivedDocVersion == true).ToList()
-                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name });
+                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name, type = x.Type });
             var docCategoryList = context.DocumentCategories.ToList()
                 .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
 
@@ -34,12 +34,14 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetFilteredArchive([FromQuery] RepositoryFilter dto)
         {
             var l = context.Documents.Include(a => a.Category).Where(a => a.HaveArchivedDocVersion == true).OrderBy(a => a.Name)
-                .Select(x => new { id = x.Id, name = x.Name, category = x.Category.Name });
+                .Select(x => new { id = x.Id, name = x.Name, category = x.Category.Name, type = x.Type });
 
             if (dto.DocId != null)
                 l = l.Where(a => a.id == dto.DocId);
             if (dto.Category != null)
                 l = l.Where(a => a.category == dto.Category);
+            if (dto.Type != null)
+                l = l.Where(a => a.type == dto.Type);
             l.ToList();
 
             return Ok(l);

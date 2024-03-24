@@ -20,6 +20,7 @@ namespace IntelliDoc_API.Models
         public string Email { get; set; } = null!;
         public byte[]? ProfilePhoto { get; set; }
         public string Password { get; set; } = null!;
+        public bool IsActive { get; set; }
 
         public virtual UserRole UserRole { get; set; } = null!;
         public virtual ICollection<Document> DocumentCreatedBies { get; set; }

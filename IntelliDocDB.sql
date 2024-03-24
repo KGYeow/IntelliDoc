@@ -13,6 +13,7 @@ CREATE TABLE [dbo].[User](
 	[Email] [nvarchar](256) NOT NULL,
 	[ProfilePhoto] [varbinary](max) NULL,
 	[Password] [nvarchar](100) NOT NULL,
+	[IsActive] [bit] NOT NULL,
  CONSTRAINT [PK_User] PRIMARY KEY CLUSTERED
 (
 	[ID] ASC
@@ -138,8 +139,8 @@ CREATE TABLE [dbo].[DocumentVersionHistory](
 GO
 
 SET IDENTITY_INSERT [dbo].[User] ON
-INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [Password]) VALUES (1, 1, N'Admin', N'admin', N'admin@gmail.com', N'33354741122871651676713774147412831195')
-INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [Password]) VALUES (2, 2, N'Staff', N'staff', N'staff@gmail.com', N'18833213210117723916811824913021616923162239')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (1, 1, N'Admin', N'admin', N'admin@gmail.com', 1, N'33354741122871651676713774147412831195')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (2, 2, N'Staff', N'staff', N'staff@gmail.com', 1, N'18833213210117723916811824913021616923162239')
 SET IDENTITY_INSERT [dbo].[User] OFF
 GO
 

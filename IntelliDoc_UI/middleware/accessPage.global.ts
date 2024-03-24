@@ -29,7 +29,7 @@ const filterSidebarItems = (accessPages: any, menuItems: any) => {
 		if (item.header) {
 			return true; // Include header
 		}
-    if (item.to && (!item.auth || accessPages.includes(item.title))) {
+    if (item.to && (!item.auth || accessPages.includes(item.accessName))) {
       return true; // Include parent item if it's accessible
     }
 		else if (item.children) {

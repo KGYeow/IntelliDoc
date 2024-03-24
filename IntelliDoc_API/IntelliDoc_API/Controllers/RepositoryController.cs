@@ -22,7 +22,7 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetRepositoryFilterOption()
         {
             var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
-                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name });
+                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name, type = x.Type });
             var docCategoryList = context.DocumentCategories.ToList()
                 .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
 
@@ -52,6 +52,8 @@ namespace IntelliDoc_API.Controllers
                 l = l.Where(a => a.id == dto.DocId);
             if (dto.Category != null)
                 l = l.Where(a => a.category == dto.Category);
+            if (dto.Type != null)
+                l = l.Where(a => a.type == dto.Type);
             l.ToList();
 
             return Ok(l);

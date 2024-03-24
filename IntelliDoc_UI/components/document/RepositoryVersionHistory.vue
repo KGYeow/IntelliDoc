@@ -1,13 +1,13 @@
 <template>
   <v-card-text class="px-8 py-4">
-    <div class="text-body-1">
+    <div class="text-body-1 overflow-hidden">
       <v-data-table
         density="compact"
         v-model:page="currentPage"
         :headers="[
           { key: 'version', title: 'Version' },
-          { key: 'updatedBy', title: 'Updated By' },
-          { key: 'updatedDate', title: 'Updated Time' },
+          { key: 'updatedBy', title: 'Updated By', minWidth: '150' },
+          { key: 'updatedDate', title: 'Updated Time', minWidth: '200' },
           { key: 'actions', sortable: false, width: 0 },
         ]"
         :sort-by="[{ key: 'version', order: 'desc' }]"
@@ -20,7 +20,12 @@
         <template #item="{ item }">
           <tr>
             <td>{{ item.version }}</td>
-            <td>{{ item.updatedBy ?? "-" }}</td>
+            <td style="max-width: 150px;">
+              <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle" v-if="item.updatedBy">
+                {{ item.updatedBy }}
+              </v-list-item>
+              <span v-else>-</span>
+            </td>
             <td>{{ item.updatedDate ? dayjs(item.updatedDate).format("DD MMM YYYY, hh:mm A") : "-" }}</td>
             <td>
               <ul class="m-0 list-inline hstack">

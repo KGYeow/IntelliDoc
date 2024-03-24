@@ -1,20 +1,24 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <UiParentCard title="Archive">
-        <v-row class="px-7">
+      <SharedUiCard :header="false" :footer="false">
+        <v-row class="pt-4">
           <!-- Filters -->
-          <v-col class="pe-0" cols="3">
+          <v-col class="pe-0" cols="4">
             <v-autocomplete
-              :items="filterOption.docNameList"
+              :items="docSearchList"
               item-title="name"
               item-value="id"
               placeholder="Documents"
               density="compact"
               variant="outlined"
+              append-inner-icon="mdi-magnify"
+              menu-icon=""
               v-model="filter.docId"
+              item-props
               hide-details
-            />     
+              :menu-props="{ width: '0'}"
+            />
           </v-col>
           <v-col class="pe-0" cols="3">
             <v-select
@@ -32,25 +36,46 @@
               </template>
             </v-select>
           </v-col>
+          <v-col class="pe-0" cols="2">
+            <v-select
+              :items="['PDF', 'Word']"
+              placeholder="File Type"
+              density="compact"
+              variant="outlined"
+              v-model="filter.type"
+              hide-details
+            >     
+              <template #prepend-item>
+                <v-list-item title="All Categories" @click="filter.type = null"/>
+              </template>
+            </v-select>
+          </v-col>
         </v-row>
 
         <!-- Archive List Table -->
-        <div class="pa-7 pt-3 text-body-1">
+        <div class="text-body-1 overflow-hidden">
           <v-data-table
             density="comfortable"
             v-model:page="currentPage"
             :headers="[
               { key: 'name', title: 'Name' },
-              { key: 'category', title: 'Category' },
+              { key: 'category', title: 'Category', minWidth: '150' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
+            :sort-by="[{ key: 'name', order: 'asc' }]"
+            sort-desc-icon="mdi-arrow-down-thin"
+            sort-asc-icon="mdi-arrow-up-thin"
             :items="archiveList"
             :items-per-page="itemsPerPage"
             hover
           >
             <template #item="{ item }">
               <tr>
-                <td><a class="row-link">{{ item.name }}</a></td>
+                <td style="max-width: 500px;">
+                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'">
+                    {{ item.name }}
+                  </v-list-item>
+                </td>
                 <td>{{ item.category }}</td>
                 <td>
                   <ul class="m-0 list-inline hstack">
@@ -105,7 +130,7 @@
             </template>
           </v-data-table>
         </div>
-      </UiParentCard>
+      </SharedUiCard>
     </v-col>
   </v-row>
 
@@ -117,7 +142,6 @@
 
 <script setup>
 import { FileDescriptionIcon } from "vue-tabler-icons"
-import UiParentCard from '@/components/shared/UiParentCard.vue'
 
 // Data
 const currentPage = ref(1)
@@ -125,6 +149,7 @@ const itemsPerPage = ref(10)
 const filter = ref({
   docId: null,
   category: null,
+  type: null,
 })
 const selectedDocInfo = ref({
   id: null,
@@ -133,6 +158,12 @@ const selectedDocInfo = ref({
 const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Archive/FilterOption")
 const { data: archiveList } = await useFetchCustom.$get("/Archive/Filter", filter.value)
+const docSearchList = filterOption.value.docNameList.map(item => {
+  return {
+    ...item,
+    prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+  }
+})
 
 // Head
 useHead({

@@ -27,5 +27,13 @@
         background-color: rgb(var(--v-theme-grey200));
       }
     }
+
+    td {
+      .v-list-item {
+        .v-list-item__content {
+          text-overflow: ellipsis
+        }
+      }
+    }
   }
 }

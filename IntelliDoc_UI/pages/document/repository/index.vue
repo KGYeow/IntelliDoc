@@ -1,19 +1,23 @@
 <template>
   <v-row>
     <v-col cols="12" md="12">
-      <UiParentCard title="Repository">
-        <v-row class="px-7">
+      <SharedUiCard :header="false" :footer="false">
+        <v-row class="pt-4">
           <!-- Filters -->
-          <v-col class="pe-0" cols="3">
+          <v-col class="pe-0" cols="4">
             <v-autocomplete
-              :items="filterOption.docNameList"
+              :items="docSearchList"
               item-title="name"
               item-value="id"
               placeholder="Documents"
               density="compact"
               variant="outlined"
+              append-inner-icon="mdi-magnify"
+              menu-icon=""
               v-model="filter.docId"
+              item-props
               hide-details
+              :menu-props="{ width: '0'}"
             />     
           </v-col>
           <v-col class="pe-0" cols="3">
@@ -32,6 +36,23 @@
               </template>
             </v-select>
           </v-col>
+          <v-col class="pe-0" cols="2">
+            <v-select
+              :items="['PDF', 'Word']"
+              placeholder="File Type"
+              density="compact"
+              variant="outlined"
+              v-model="filter.type"
+              hide-details
+            >     
+              <template #prepend-item>
+                <v-list-item title="All Categories" @click="filter.type = null"/>
+              </template>
+            </v-select>
+          </v-col>
+        </v-row>
+        <v-divider/>
+        <v-row>
           <v-col>
             <!-- Add New Document -->
             <v-file-input
@@ -47,26 +68,37 @@
         </v-row>
 
         <!-- Document List Table -->
-        <div class="pa-7 pt-3 text-body-1">
+        <div class="text-body-1 overflow-hidden">
           <v-data-table
             density="comfortable"
             v-model:page="currentPage"
             :headers="[
               { key: 'name', title: 'Name' },
-              { key: 'category', title: 'Category' },
-              { key: 'modifiedBy', title: 'Modified By' },
-              { key: 'modifiedDate', title: 'Modified Time' },
+              { key: 'category', title: 'Category', minWidth: '150' },
+              { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
+              { key: 'modifiedDate', title: 'Modified Time', minWidth: '200' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
+            :sort-by="[{ key: 'name', order: 'asc' }]"
+            sort-desc-icon="mdi-arrow-down-thin"
+            sort-asc-icon="mdi-arrow-up-thin"
             :items="docList"
             :items-per-page="itemsPerPage"
             hover
           >
-            <template #item="{ item, index }">
+            <template #item="{ item }">
               <tr>
-                <td><a class="row-link">{{ item.name }}</a></td>
+                <td style="max-width: 420px;">
+                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'">
+                    {{ item.name }}
+                  </v-list-item>
+                </td>
                 <td>{{ item.category }}</td>
-                <td>{{ item.modifiedBy }}</td>
+                <td style="max-width: 150px;">
+                  <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle">
+                    {{ item.modifiedBy }}
+                  </v-list-item>
+                </td>
                 <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>
                 <td>
                   <ul class="m-0 list-inline hstack">
@@ -124,7 +156,7 @@
             </template>
           </v-data-table>
         </div>
-      </UiParentCard>
+      </SharedUiCard>
     </v-col>
   </v-row>
 
@@ -161,7 +193,6 @@
 import { FileDescriptionIcon } from "vue-tabler-icons"
 import { Buffer } from 'buffer'
 import dayjs from 'dayjs'
-import UiParentCard from '@/components/shared/UiParentCard.vue'
 
 // Data
 const currentPage = ref(1)
@@ -169,6 +200,7 @@ const itemsPerPage = ref(10)
 const filter = ref({
   docId: null,
   category: null,
+  type: null,
 })
 const addDocInfo = ref({
   name: null,
@@ -187,6 +219,12 @@ const editAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
 const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
+const docSearchList = filterOption.value.docNameList.map(item => {
+  return {
+    ...item,
+    prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+  }
+})
 
 // Head
 useHead({
