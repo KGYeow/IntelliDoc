@@ -6,8 +6,8 @@
         v-model:page="currentPage"
         :headers="[
           { key: 'version', title: 'Version' },
-          { key: 'updatedBy', title: 'Updated By', minWidth: '150' },
-          { key: 'updatedDate', title: 'Updated Time', minWidth: '200' },
+          { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
+          { key: 'modifiedDate', title: 'Modified Time', minWidth: '200' },
           { key: 'actions', sortable: false, width: 0 },
         ]"
         :sort-by="[{ key: 'version', order: 'desc' }]"
@@ -21,12 +21,12 @@
           <tr>
             <td>{{ item.version }}</td>
             <td style="max-width: 150px;">
-              <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle" v-if="item.updatedBy">
-                {{ item.updatedBy }}
+              <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
+                <span v-if="item.modifiedBy">{{ item.modifiedBy }}</span>
+                <span class="text-muted fst-italic" v-else>Deleted Account</span>
               </v-list-item>
-              <span v-else>-</span>
             </td>
-            <td>{{ item.updatedDate ? dayjs(item.updatedDate).format("DD MMM YYYY, hh:mm A") : "-" }}</td>
+            <td>{{ item.modifiedDate ? dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") : "-" }}</td>
             <td>
               <ul class="m-0 list-inline hstack">
                 <li>

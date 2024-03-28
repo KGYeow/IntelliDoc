@@ -57,7 +57,7 @@
                   <v-list-item class="p-0 text-nowrap">{{ item.email }}</v-list-item>
                 </td>
                 <td>
-                  <el-tag :type="item.isActive ? 'success' : 'error'" effect="light">
+                  <el-tag :type="item.isActive ? 'success' : 'danger'" effect="light">
                     {{ item.isActive ? 'Active' : 'Inactive' }}
                   </el-tag>
                 </td>
@@ -80,7 +80,7 @@
                             width="210"
                             @confirm="activationUser(item.id, false)"
                           >
-                            <template #reference><v-btn icon="mdi-account-lock-outline" size="small" variant="text" :="props"/></template>
+                            <template #reference><v-btn icon="mdi-account-lock-outline" size="small" variant="text" :="props" :disabled="item.id == user.id"/></template>
                           </el-popconfirm>
                         </template>
                       </v-tooltip>
@@ -106,9 +106,9 @@
                             title="Are you sure to delete this user account forever?"
                             icon-color="red"
                             width="220"
-                            @confirm="deleteUser(item.id)"
+                            @confirm="selectUser('Delete', item)"
                           >
-                            <template #reference><v-btn icon="mdi-trash-can-outline" size="small" variant="text" :="props"/></template>
+                            <template #reference><v-btn icon="mdi-trash-can-outline" size="small" variant="text" :="props" :disabled="item.id == user.id"/></template>
                           </el-popconfirm>
                         </template>
                       </v-tooltip>
@@ -140,23 +140,30 @@
 
   <!-- Edit User Modal -->
   <SharedUiModal v-model="editUserModal" title="Edit User Account" width="500">
-    <UserEditForm ref="userEditForm" :user-info="selectedUserInfo" @close-modal="(e) => editUserModal = e"/>
+    <UserEditForm :user-info="selectedUserInfo" @close-modal="(e) => editUserModal = e"/>
+  </SharedUiModal>
+
+  <!-- Delete User Confirmation Modal -->
+  <SharedUiModal v-model="deleteUserModal" title="Delete User Account Confirmation" width="500">
+    <DeleteConfirmationForm :user-id="selectedUserInfo.id" @close-modal="(e) => deleteUserModal = e"/>
   </SharedUiModal>
 </template>
 
 <script setup>
 import { SettingsIcon } from "vue-tabler-icons"
+import DeleteConfirmationForm from "~/components/user/DeleteConfirmationForm.vue";
 
 // Data
+const { data: user } = useAuth()
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filter = ref({
   userId: null,
 })
 const selectedUserInfo = ref({})
-const userEditForm = ref(null)
 const addUserModal = ref(false)
 const editUserModal = ref(false)
+const deleteUserModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/User/FilterOption")
 const { data: userList } = await useFetchCustom.$get("/User/Filter", filter.value)
 const userFullNameSearchList = filterOption.value.map(item => {
@@ -196,6 +203,9 @@ const selectUser = (action, user) => {
   if (action == "Edit") {
     editUserModal.value = true
   }
+  else if (action == "Delete") {
+    deleteUserModal.value = true
+  }
   else {
     ElNotification.error({ message: "Undefined action performed" })
   }
@@ -203,18 +213,6 @@ const selectUser = (action, user) => {
 const activationUser = async(userId, isActivate) => {
   try {
     const result = await useFetchCustom.$put(`/User/Activation/${userId}/${isActivate}`)
-    if (!result.error) {
-      ElNotification.success({ message: result.message })
-      refreshNuxtData()
-    }
-    else {
-      ElNotification.error({ message: result.message })
-    }
-  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
-}
-const deleteUser = async(userId) => {
-  try {
-    const result = await useFetchCustom.$delete(`/User/${userId}`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

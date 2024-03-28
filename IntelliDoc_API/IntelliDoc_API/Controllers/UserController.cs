@@ -69,9 +69,43 @@ namespace IntelliDoc_API.Controllers
         // Create a new user account.
         [HttpPost]
         [Route("")]
-        public IActionResult Create([FromBody] Create dto)
+        public IActionResult Create([FromBody] UserCreate dto)
         {
+            var existingUser = context.Users.Where(a => a.Username == dto.Username).FirstOrDefault();
+            var existingEmail = context.Users.Where(a => a.Email == dto.Email).FirstOrDefault();
+
+            if (existingUser != null)
+                throw new Exception("Username has been used");
+            if (existingEmail != null)
+                throw new Exception("Email has been used");
+
+            var role = context.UserRoles.Where(a => a.Name == dto.Role).FirstOrDefault();
+            var newUser = new User
+            {
+                UserRoleId = role.Id,
+                FullName = dto.FullName,
+                Username = dto.Username,
+                Email = dto.Email,
+                IsActive = true,
+            };
+            var createUser = userService.Create(newUser, dto.Password);
+
             return Ok(new Response { Status = "Success", Message = "The user account has been created successfully" });
+        }
+
+        // Change the activation status of the user account.
+        [HttpPut]
+        [Route("Activation/{UserId}/{IsActivate}")]
+        public IActionResult ChangeActivationStatus(int userId, bool isActivate)
+        {
+            var user = context.Users.Where(a => a.Id == userId).FirstOrDefault();
+            string status = isActivate ? "activated" : "inactivated";
+
+            user.IsActive = isActivate;
+            context.Users.Update(user);
+            context.SaveChanges();
+
+            return Ok(new Response { Status = "Success", Message = "The user account has been " + status + " successfully" });
         }
 
         // Update the current logged-in user account information.
@@ -124,11 +158,9 @@ namespace IntelliDoc_API.Controllers
         public IActionResult MeUpdatePassword(string newPassword)
         {
             var user = userService.GetUser(User);
-
             if (!string.IsNullOrEmpty(newPassword))
             {
                 var encryptedPassword = AppStatic.Encrypt(newPassword);
-
                 if (user.Password != encryptedPassword)
                 {
                     user.Password = encryptedPassword;
@@ -138,8 +170,25 @@ namespace IntelliDoc_API.Controllers
                 else
                     throw new Exception("The new password is the same as the old password");
             }
-
             return Ok(new Response { Status = "Success", Message = "Your password updated successfully" });
+        }
+
+        // User current password confirmation.
+        [HttpPost]
+        [Route("Me/PasswordConfirmation/{Password}")]
+        public IActionResult MePasswordConfirmation(string password)
+        {
+            var user = userService.GetUser(User);
+            if (!string.IsNullOrEmpty(password))
+            {
+                var encryptedPassword = AppStatic.Encrypt(password);
+                if (user.Password == encryptedPassword)
+                    return Ok(true);
+                else
+                    throw new Exception("Your account password is incorrect");
+            }
+            else
+                throw new Exception("The password cannot be empty");
         }
 
         // Get the specific user's account information.
@@ -156,8 +205,8 @@ namespace IntelliDoc_API.Controllers
 
         // Update the specific user's account information.
         [HttpPut]
-        [Route("Info/{UserId}/Edit")]
-        public IActionResult UserInfoUpdate(int userId, [FromBody] Edit dto)
+        [Route("{UserId}")]
+        public IActionResult Update(int userId, [FromBody] UserEdit dto)
         {
             var role = context.UserRoles.Where(a => a.Name == dto.Role).FirstOrDefault();
             var userInfo = context.Users.Where(a => a.Id == userId).FirstOrDefault();
@@ -175,14 +224,32 @@ namespace IntelliDoc_API.Controllers
 
         // Delete the user account.
         [HttpDelete]
-        [Route("Delete/{UserId}")]
-        public IActionResult UserDelete(int userId)
+        [Route("{UserId}/{Password}")]
+        public IActionResult Delete(int userId, string password)
         {
+            MePasswordConfirmation(password);
+
+            var relatedDocList = context.Documents.Where(d => d.CreatedById == userId || d.ModifiedById == userId).ToList();
+            foreach (var doc in relatedDocList)
+            {
+                doc.CreatedById = doc.CreatedById == userId ? null : doc.CreatedById;
+                doc.ModifiedById = doc.ModifiedById == userId ? null : doc.ModifiedById;
+            }
+            context.Documents.UpdateRange(relatedDocList);
+
+            var relatedDocVersionList = context.DocumentVersionHistories.Where(d => d.ModifiedById == userId).ToList();
+            foreach (var docVersion in relatedDocVersionList)
+                docVersion.ModifiedById = null;
+            context.DocumentVersionHistories.UpdateRange(relatedDocVersionList);
+
+            var relatedNotifications = context.Notifications.Where(d => d.UserId == userId).ToList();
+            context.Notifications.RemoveRange(relatedNotifications);
+
             var userInfo = context.Users.Where(a => a.Id == userId).FirstOrDefault();
             context.Users.Remove(userInfo);
-            context.SaveChanges();　
+            context.SaveChanges();
 
-            return Ok(new Response { Status = "Success", Message = "User account deleted successfully" });
+            return Ok(new Response { Status = "Success", Message = "The user account has been deleted successfully" });
         }
     }
 }

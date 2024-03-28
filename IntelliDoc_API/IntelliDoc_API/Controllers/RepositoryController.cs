@@ -4,7 +4,6 @@ using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.ML;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -64,15 +63,15 @@ namespace IntelliDoc_API.Controllers
         [Route("VersionHistory/{DocId}")]
         public IActionResult GetDocumentVersionHistory(int docId)
         {
-            var l = context.DocumentVersionHistories.Include(a => a.UpdatedBy)
+            var l = context.DocumentVersionHistories.Include(a => a.ModifiedBy)
                 .Where(d => d.DocumentId == docId && d.IsArchived == false)
                 .Select(x => new
                 {
                     id = x.Id,
                     version = x.Version,
-                    updatedById = x.UpdatedById,
-                    updatedBy = x.UpdatedBy.FullName,
-                    updatedDate = x.UpdatedDate,
+                    modifiedById = x.ModifiedById,
+                    modifiedBy = x.ModifiedBy.FullName,
+                    modifiedDate = x.ModifiedDate,
                 }).ToList();
             return Ok(l);
         }
@@ -99,7 +98,7 @@ namespace IntelliDoc_API.Controllers
         // Upload and create the new document.
         [HttpPost]
         [Route("")]
-        public IActionResult Create([FromBody] Create dto)
+        public IActionResult Create([FromBody] RepositoryCreate dto)
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(a => a.Name == dto.Name).Any();
@@ -129,6 +128,8 @@ namespace IntelliDoc_API.Controllers
             {
                 DocumentId = document.Id,
                 Version = 1,
+                ModifiedById = user.Id,
+                ModifiedDate = DateTime.Now,
                 Attachment = dto.Attachment,
                 IsArchived = false
             };
@@ -141,7 +142,7 @@ namespace IntelliDoc_API.Controllers
         // Edit and update the existing document.
         [HttpPut]
         [Route("{DocId}")]
-        public IActionResult Update(int docId, [FromBody] Update dto)
+        public IActionResult Update(int docId, [FromBody] RepositoryUpdate dto)
         {
             var user = userService.GetUser(User);
             var previousDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
@@ -156,8 +157,8 @@ namespace IntelliDoc_API.Controllers
             {
                 DocumentId = previousDocVersion.DocumentId,
                 Version = previousDocVersion.Version + 1,
-                UpdatedById = user.Id,
-                UpdatedDate = DateTime.Now,
+                ModifiedById = user.Id,
+                ModifiedDate = DateTime.Now,
                 Attachment = dto.Attachment,
                 IsArchived = false
             };
@@ -222,12 +223,17 @@ namespace IntelliDoc_API.Controllers
                 context.DocumentVersionHistories.Update(existingVersionHistory);
                 context.SaveChanges();
 
+                var latestDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false)
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefault();
+
+                existingDoc.ModifiedById = latestDocVersion.ModifiedById;
+                existingDoc.ModifiedDate = latestDocVersion.ModifiedDate;
+
                 // If the all the versions are archived.
                 var isNoArchivedVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false).Any();
                 if (!isNoArchivedVersionExist)
-                {
                     existingDoc.IsAllVersionsArchived = true;
-                }
                 context.Documents.Update(existingDoc);
                 context.SaveChanges();
 

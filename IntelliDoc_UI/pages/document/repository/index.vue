@@ -89,14 +89,15 @@
             <template #item="{ item }">
               <tr>
                 <td style="max-width: 420px;">
-                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'">
+                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
                     {{ item.name }}
                   </v-list-item>
                 </td>
                 <td>{{ item.category }}</td>
                 <td style="max-width: 150px;">
-                  <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle">
-                    {{ item.modifiedBy }}
+                  <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
+                    <span v-if="item.modifiedBy">{{ item.modifiedBy }}</span>
+                    <span class="text-muted fst-italic" v-else>Deleted Account</span>
                   </v-list-item>
                 </td>
                 <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>

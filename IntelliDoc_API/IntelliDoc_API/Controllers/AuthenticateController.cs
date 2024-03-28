@@ -88,7 +88,8 @@ namespace RnD_Traceability_System_API
                 UserRoleId = role.Id,
                 FullName = model.Username,
                 Username = model.Username,
-                Email = model.Email
+                Email = model.Email,
+                IsActive = true,
             };
             var createUser = userService.Create(newUser, model.Password);
 

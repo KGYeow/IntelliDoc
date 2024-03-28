@@ -72,7 +72,7 @@
             <template #item="{ item }">
               <tr>
                 <td style="max-width: 500px;">
-                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'">
+                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
                     {{ item.name }}
                   </v-list-item>
                 </td>

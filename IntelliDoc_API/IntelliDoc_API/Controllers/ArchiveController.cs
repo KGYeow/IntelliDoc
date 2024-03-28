@@ -74,10 +74,6 @@ namespace IntelliDoc_API.Controllers
 
             if (version == 0) // All versions.
             {
-                archivedDoc.HaveArchivedDocVersion = false;
-                context.Documents.Update(archivedDoc);
-                context.SaveChanges();
-
                 var archivedVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).ToList();
                 foreach (var archivedDocVersion in archivedVersionHistories)
                 {
@@ -86,6 +82,16 @@ namespace IntelliDoc_API.Controllers
                     context.DocumentVersionHistories.Update(archivedDocVersion);
                     context.SaveChanges();
                 }
+
+                var latestDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false)
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefault();
+
+                archivedDoc.HaveArchivedDocVersion = false;
+                archivedDoc.ModifiedById = latestDocVersion.ModifiedById;
+                archivedDoc.ModifiedDate = latestDocVersion.ModifiedDate;
+                context.Documents.Update(archivedDoc);
+                context.SaveChanges();
 
                 return Ok(new Response { Status = "Success", Message = "Archived document restored successfully" });
             }
@@ -100,9 +106,14 @@ namespace IntelliDoc_API.Controllers
                 // If the all the versions are restored.
                 var isArchivedVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == true).Any();
                 if (!isArchivedVersionExist)
-                {
                     archivedDoc.HaveArchivedDocVersion = false;
-                }
+
+                var latestDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId && d.IsArchived == false)
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefault();
+
+                archivedDoc.ModifiedById = latestDocVersion.ModifiedById;
+                archivedDoc.ModifiedDate = latestDocVersion.ModifiedDate;
                 context.Documents.Update(archivedDoc);
                 context.SaveChanges();
 

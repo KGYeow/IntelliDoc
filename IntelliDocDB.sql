@@ -90,9 +90,9 @@ CREATE TABLE [dbo].[Document](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](max) NOT NULL,
 	[CategoryID] [int] NOT NULL,
-	[CreatedByID] [int] NOT NULL,
+	[CreatedByID] [int] NULL,
 	[CreatedDate] [datetime] NOT NULL,
-	[ModifiedByID] [int] NOT NULL,
+	[ModifiedByID] [int] NULL,
 	[ModifiedDate] [datetime] NOT NULL,
 	[Type] [varchar](10) NOT NULL,
 	[HaveArchivedDocVersion] [bit] NOT NULL,
@@ -126,8 +126,8 @@ CREATE TABLE [dbo].[DocumentVersionHistory](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[DocumentID] [int] NOT NULL,
 	[Version] [int] NOT NULL,
-	[UpdatedByID] [int] NULL,
-	[UpdatedDate] [datetime] NULL,
+	[ModifiedByID] [int] NULL,
+	[ModifiedDate] [datetime] NOT NULL,
 	[ArchivedDate] [datetime] NULL,
 	[Attachment] [varbinary](max) NOT NULL,
 	[IsArchived] [bit] NOT NULL,
@@ -141,6 +141,11 @@ GO
 SET IDENTITY_INSERT [dbo].[User] ON
 INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (1, 1, N'Admin', N'admin', N'admin@gmail.com', 1, N'33354741122871651676713774147412831195')
 INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (2, 2, N'Staff', N'staff', N'staff@gmail.com', 1, N'18833213210117723916811824913021616923162239')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (3, 1, N'Yeow Kok Guan', N'yeowkokguan', N'yeowkokguan@gmail.com', 1, N'160571149248862170126514117612720113242')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (4, 2, N'Ling Shao Doo', N'lingshaodoo', N'lingshaodoo@gmail.com', 1, N'2142253019722020443249135998418116895189247')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (5, 2, N'Liong Man Chun', N'liongmanchun', N'liongmanchun@gmail.com', 1, N'156226206159207254641657402445991252174221')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (6, 2, N'Lim Jie Yi', N'limjieyi', N'limjieyi@gmail.com', 1, N'10678240146222119291141534611411212712925241')
+INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (7, 2, N'Li Jun Tong', N'lijuntong', N'lijuntong@gmail.com', 1, N'35249758822711016422141151208145121181205122')
 SET IDENTITY_INSERT [dbo].[User] OFF
 GO
 
@@ -230,7 +235,7 @@ REFERENCES [dbo].[Document] ([ID])
 GO
 ALTER TABLE [dbo].[DocumentVersionHistory] CHECK CONSTRAINT [FK_DocumentVersionHistory_Document]
 GO
-ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_User] FOREIGN KEY([UpdatedByID])
+ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_User] FOREIGN KEY([ModifiedByID])
 REFERENCES [dbo].[User] ([ID])
 GO
 ALTER TABLE [dbo].[DocumentVersionHistory] CHECK CONSTRAINT [FK_DocumentVersionHistory_User]

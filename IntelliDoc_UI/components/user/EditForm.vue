@@ -105,7 +105,7 @@ const { data: roleList } = await useFetchCustom.$get("/User/RoleList")
 // Methods
 const editUser = handleSubmit(async(values) => {
   try {
-    const result = await useFetchCustom.$put("/User", values)
+    const result = await useFetchCustom.$put(`/User/${props.userInfo.id}`, values)
     if (!result.error) {
       emit('close-modal', false)
       editUserInfo.value.fullName.resetField()

@@ -1,7 +1,7 @@
 <template>
   <v-card elevation="10" class="mb-5 withbg">
     <v-breadcrumbs
-      class="px-7 text-subtitle-1"
+      class="px-7 text-subtitle-2"
       density="compact"
       :items="useRoute().meta.breadcrumbs"
     >

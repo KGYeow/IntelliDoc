@@ -67,13 +67,11 @@ namespace IntelliDoc_API.Models
                 entity.HasOne(d => d.CreatedBy)
                     .WithMany(p => p.DocumentCreatedBies)
                     .HasForeignKey(d => d.CreatedById)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Document_CreatedByUser");
 
                 entity.HasOne(d => d.ModifiedBy)
                     .WithMany(p => p.DocumentModifiedBies)
                     .HasForeignKey(d => d.ModifiedById)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Document_ModifiedByUser");
             });
 
@@ -96,9 +94,9 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.DocumentId).HasColumnName("DocumentID");
 
-                entity.Property(e => e.UpdatedById).HasColumnName("UpdatedByID");
+                entity.Property(e => e.ModifiedById).HasColumnName("ModifiedByID");
 
-                entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+                entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
                 entity.HasOne(d => d.Document)
                     .WithMany(p => p.DocumentVersionHistories)
@@ -106,9 +104,9 @@ namespace IntelliDoc_API.Models
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_DocumentVersionHistory_Document");
 
-                entity.HasOne(d => d.UpdatedBy)
+                entity.HasOne(d => d.ModifiedBy)
                     .WithMany(p => p.DocumentVersionHistories)
-                    .HasForeignKey(d => d.UpdatedById)
+                    .HasForeignKey(d => d.ModifiedById)
                     .HasConstraintName("FK_DocumentVersionHistory_User");
             });
 

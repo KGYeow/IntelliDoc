@@ -56,7 +56,10 @@
               density="compact"
               v-model="addUserInfo.password.value"
               :error-messages="addUserInfo.password.errorMessage"
+              :append-inner-icon="passwordVisible ? 'mdi-eye-off fs-5' : 'mdi-eye fs-5'"
+              :type="passwordVisible ? 'text' : 'password'"
               hide-details="auto"
+              @click:append-inner="passwordVisible = !passwordVisible"
             />
           </v-col>
         </v-row>
@@ -101,6 +104,7 @@ const addUserInfo = ref({
   role: useField('role'),
   password: useField('password'),
 })
+const passwordVisible = ref(false)
 const { data: roleList } = await useFetchCustom.$get("/User/RoleList")
 
 // Methods

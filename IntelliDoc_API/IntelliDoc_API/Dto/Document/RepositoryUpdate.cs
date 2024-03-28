@@ -2,10 +2,8 @@
 
 namespace IntelliDoc_API.Dto.Document
 {
-    public class Create
+    public class RepositoryUpdate
     {
-        public string Name { get; set; } = null!;
         public byte[] Attachment { get; set; } = null!;
-        public string Type { get; set; } = null!;
     }
 }
