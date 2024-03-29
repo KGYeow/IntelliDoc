@@ -30,13 +30,21 @@ namespace IntelliDoc_API.Controllers
                 documentText = modelService.PreprocessText(documentText);
 
                 // Convert text to a suitable format for the model
-                modelService.ConvertTextToFeatures(documentText);
-                return Ok(documentText);
+                var features = modelService.ConvertTextToFeatures(documentText);
+
+                // Extract predicted class and probabilities (modify based on your IronPython function output)
+                /*                var predictedClass = prediction["class"];
+                                var probabilities = prediction["probabilities"];*/
+
+                // return Ok(new { predictedClass, probabilities });
+                // return Ok(features);
+
                 // Make prediction
+                modelService.Predict(features);
                 // var prediction = modelService.Predict(features);
                 // var predictionProba = modelService.PredictProbability(new double[][] { features });
 
-                // return Ok(new { predictedClass = prediction });
+                return Ok(features);
                 // return Ok(new { predictedClass = prediction, predictedProbability = predictionProba });
 
                 // Convert input data to the format expected by the model (double[][])
@@ -44,7 +52,7 @@ namespace IntelliDoc_API.Controllers
                 // var predictions = modelService.Predict(doubleInputs);
                 // return Ok(predictions);
             }
-            catch (Exception ex)
+            catch (Exception ex)    
             {
                 throw new Exception(ex.Message);
             }
