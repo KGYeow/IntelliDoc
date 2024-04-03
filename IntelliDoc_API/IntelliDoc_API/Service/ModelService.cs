@@ -6,94 +6,78 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.ML;
-using Microsoft.ML.Data;
-using System.Data;
-using Accord.Math;
-using Accord.MachineLearning;
+using System.Text.Json;
 
 namespace IntelliDoc_API.Service
 {
     public class ModelService
     {
-        protected readonly InferenceSession session;
+        protected TfidfVectorizer? vectorizer;
+        protected InferenceSession session;
 
-        public ModelService() // Inject model path in constructor
+
+        public ModelService()
         {
-            string modelPath = "D:\\Documents\\USM\\USM_NotesExercises\\Year 4 Sem 1\\CAT405\\Logistic Regression Model\\DocClassificationLrModel.onnx";
+            string currentDir = Directory.GetCurrentDirectory();
+
+            string tfidfVectorizerPath = currentDir + @"\ML_Model\TFIDFvectorizer.json";
+            string jsonString = File.ReadAllText(tfidfVectorizerPath, Encoding.UTF8);
+            vectorizer = JsonSerializer.Deserialize<TfidfVectorizer>(jsonString);
+
+            string modelPath = currentDir + @"\ML_Model\DocClassificationLrModel.onnx";
             session = new InferenceSession(modelPath);
         }
 
-/*        public double[] PredictProbability(float[][] features)
+        public class TfidfVectorizer
         {
-            // Similar logic as Predict, but access probabilities from output
-            var inputData = new float[features.Length][];
-            for (int i = 0; i < features.Length; i++)
-                inputData[i] = features[i].Cast<float>().ToArray();
+            public Dictionary<string, int>? Vocabulary { get; set; }
+            public float[]? IDF { get; set; }
+        }
 
-            var inputNames = session.InputNames;
-            var inputTensors = new List<NamedOnnxValue>();
-            foreach (var name in inputNames)
-            {
-                inputTensors.Add(NamedOnnxValue.CreateFromTensor(name, new Tensor<float>(inputData)));
-            }
-
-            IEnumerable<NamedOnnxValue> outputs = session.Run(inputTensors.ToArray());
-            var output = outputs.FirstOrDefault();
-            var outputData = output.Value.AsTensor<float>();
-
-            // Assuming probabilities are the first output
-            return outputData.Data;
-        }*/
-
-        // Helper method to get class label based on prediction index (optional)
-        private string GetLabel(int predictionIndex)
+        public string[] GetCategoryList()
         {
-            // Implement logic to retrieve the class label based on the predicted index
-            // This might involve using a lookup table or the model's metadata
-            throw new NotImplementedException("GetLabel not implemented");
+            string[] categories = new string[] { "Business", "Entertainment", "Food", "Graphics", "Historical", "Medical", "Politics", "Space", "Sport", "Technologie", "Others" };
+            return categories;
         }
 
         // Extract the document text.
-        public string DocumentTextExtraction(string docPath, string docName)
+        public string DocumentTextExtraction(byte[] docBytes, string docName)
         {
-            if (System.IO.File.Exists(docPath))
+            if (docBytes == null || docBytes.Length == 0)
+                throw new Exception($"{docName}, Document byte array cannot be null or empty.");
+
+            string text;
+            var memoryStream = new MemoryStream(docBytes);
+            if (docName.EndsWith(".pdf"))
             {
-                string text;
-                if (docName.EndsWith(".pdf"))
+                var pageText = new StringBuilder();
+                var document = new PdfDocument(new PdfReader(memoryStream)); // Read PDF using new PdfDocument & new PdfReader
+                var pageNum = document.GetNumberOfPages();
+                for (int page = 1; page <= pageNum; page++)
                 {
-                    var pageText = new StringBuilder();
-                    var document = new PdfDocument(new PdfReader(docPath)); // Read PDF using new PdfDocument & new PdfReader
-                    var pageNum = document.GetNumberOfPages();
-                    for (int page = 1; page <= pageNum; page++)
-                    {
-                        // New LocationTextExtractionStrategy creates a new text extraction renderer
-                        var strategy = new LocationTextExtractionStrategy();
-                        var parser = new PdfCanvasProcessor(strategy);
-                        parser.ProcessPageContent(document.GetFirstPage());
-                        pageText.Append(strategy.GetResultantText());
-                    }
-                    text = pageText.ToString();
+                    // New LocationTextExtractionStrategy creates a new text extraction renderer
+                    var strategy = new LocationTextExtractionStrategy();
+                    var parser = new PdfCanvasProcessor(strategy);
+                    parser.ProcessPageContent(document.GetPage(page));
+                    pageText.Append(strategy.GetResultantText());
                 }
-                else if (docName.EndsWith(".docx"))
-                {
-                    // Use Open XML SDK for Word document text extraction
-                    var document = WordprocessingDocument.Open(docPath, false);
-                    DocumentFormat.OpenXml.Wordprocessing.Body body = document.MainDocumentPart.Document.Body;
-                    text = body.InnerText;
-                }
-                else if (docName.EndsWith(".txt"))
-                {
-                    // Read text directly for TXT files
-                    var reader = new StreamReader(docPath, Encoding.UTF8);
-                    text = reader.ReadToEnd();
-                }
-                else
-                    throw new Exception($"Unsupported file format: {docName}");
-                return text;
+                text = pageText.ToString();
+            }
+            else if (docName.EndsWith(".docx"))
+            {
+                // Use Open XML SDK for Word document text extraction
+                var document = WordprocessingDocument.Open(memoryStream, false);
+                DocumentFormat.OpenXml.Wordprocessing.Body body = document.MainDocumentPart.Document.Body;
+                text = body.InnerText;
+            }
+            else if (docName.EndsWith(".txt"))
+            {
+                // Read text directly for TXT files
+                text = Encoding.UTF8.GetString(docBytes);
             }
             else
-                throw new Exception($"File not found: {docPath}");
+                throw new Exception($"Unsupported file format: {docName}");
+            return text;
         }
 
         // Preprocess the document text.
@@ -104,126 +88,84 @@ namespace IntelliDoc_API.Service
             text = text.ToLowerInvariant(); // Convert to lowercase
             text = Regex.Replace(text, "[^\\w\\s]", ""); // Remove punctuation and non-alphanumeric characters
             text = Regex.Replace(text, @"\s+", " "); // Remove extra whitespace
+            text = Regex.Replace(text, @"\d+", ""); // Remove numbers
             return text;
         }
 
         // Convert the preprocessed text to features.
-        public float[][] ConvertTextToFeatures(string text)
+        public float[] Transform(string text)
         {
-/*
-            var tfidfVectorizer = new TFIDF();
-            var tfidfFeatures = tfidfVectorizer.Transform(new[] { text }.Tokenize());
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine("tfidfFeatures");
-            Console.WriteLine(tfidfFeatures.Rows());
-            Console.WriteLine(tfidfFeatures.Columns());
-            Console.WriteLine(tfidfFeatures[0][0]);
-            Console.WriteLine("=====================================================================");
-*/
-            var mlContext = new MLContext();
+            var tokens = Regex.Matches(text.ToLower(), @"\b\w\w+\b").Cast<Match>().Select(m => m.Value).ToArray(); // Tokenization
+            var tf = new Dictionary<int, int>(); // Initialize sparse vector for TF (term frequencies)
 
-            // Create an IDataView from a single string
-            // var dataView = mlContext.Data.LoadFromEnumerable(new[] { extractedText }, SchemaDefinition.Create(typeof(string)));
-            var dataView = mlContext.Data.LoadFromEnumerable(new[] { new { ExtractedText = text } });
-/*
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine(dataView.Preview());
-            Console.WriteLine(dataView.Preview().Schema);
-            Console.WriteLine(dataView.Preview().RowView.ToList().Count);
-            Console.WriteLine(dataView.Preview().ColumnView.ToList().Count);
-            Console.WriteLine("=====================================================================");
-            foreach (var col in dataView.Preview().ColumnView)
+            // Calculate term frequencies
+            foreach (var token in tokens)
             {
-                Console.WriteLine(col.Column + "\t");
-            }
-            Console.WriteLine("=====================================================================");
-            foreach (var row in dataView.Preview().RowView)
-            {
-                foreach (var col in row.Values)
+                if (vectorizer.Vocabulary.ContainsKey(token))
                 {
-                    Console.WriteLine($"({col.Key}, {col.Value})\t");
+                    int index = vectorizer.Vocabulary[token];
+                    tf[index] = tf.GetValueOrDefault(index, 0) + 1;
                 }
             }
-            Console.WriteLine("=====================================================================");
-*/
-            // Text featurization pipeline
-            var textFeaturizer = mlContext.Transforms.Text.FeaturizeText(
-                outputColumnName: "Features",
-                inputColumnName: "ExtractedText"
-            );
+            
+            var tfidfFeatures = new float[vectorizer.Vocabulary.Count]; // Initialize dense vector for TF-IDF features
 
-            // Transform the data and extract features
-            var transformedData = textFeaturizer.Fit(dataView).Transform(dataView);
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine(transformedData.Preview());
-            Console.WriteLine(transformedData.Preview().Schema);
-            Console.WriteLine(transformedData.Preview().RowView.ToList().Count);
-            Console.WriteLine(transformedData.Preview().ColumnView.ToList().Count);
-            Console.WriteLine("=====================================================================");
-            foreach (var col in transformedData.Preview().ColumnView)
+            // Calculate TF-IDF for each term in vocabulary
+            foreach (var term in vectorizer.Vocabulary)
             {
-                Console.WriteLine(col.Column + "\t");
+                int index = term.Value;
+                int termFreq = tf.GetValueOrDefault(index, 0); // Handles terms not in the text
+                tfidfFeatures[index] = termFreq * vectorizer.IDF[index];
             }
-            Console.WriteLine("=====================================================================");
-            foreach (var row in transformedData.Preview().RowView)
-            {
-                foreach (var col in row.Values)
-                {
-                    Console.WriteLine($"({col.Key}, {col.Value})\t");
-                }
-            }
-            Console.WriteLine("=====================================================================");
-            var features = transformedData.GetColumn<float[]>("Features").Select(x => x).ToArray();
-            // var features = mlContext.Data.CreateEnumerable<float[]>(transformedData, true).ToList().Select(row => row).ToArray();
-            Console.WriteLine(features.Rows());
-            Console.WriteLine(features.Columns());
-/*            for (int i = 0; i < features.Columns(); i++)
-            {
-                Console.WriteLine($"({i}, {features.GetColumn(i)})" + "\t");
-            }*/
-            Console.WriteLine("=====================================================================");
-            return features;
+
+            var sumOfSquares = tfidfFeatures.Sum(x => x * x);
+            var l2Norm = (float)Math.Sqrt(sumOfSquares); // Normalization
+            for (int i = 0; i < tfidfFeatures.Length; i++)
+                tfidfFeatures[i] /= l2Norm;
+
+            return tfidfFeatures;
         }
 
-        public void Predict(float[][] features)
+        // Predict the text based on the features.
+        public List<string> Predict(float[] features)
         {
-            // Convert features data to ONNX tensors (assuming single data point)
+            // Convert features data to ONNX tensors
             var inputData = new float[1][];
-            // inputData[0] = features[0].Cast<float>().ToArray();
-            inputData[0] = features[0];
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine(inputData.Columns());
-            Console.WriteLine("=====================================================================");
+            inputData[0] = features;
+
             var inputNames = session.InputNames;
             var inputTensors = new List<NamedOnnxValue>();
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine("Input Names: ");
-            Console.WriteLine(inputNames);
-            Console.WriteLine("=====================================================================");
-            foreach (var name in inputNames)
-            {
-                var tensor = new DenseTensor<float>(inputData.SelectMany(x => x).ToArray(), new int[] { inputData.Length, inputData[0].Length });
-                inputTensors.Add(NamedOnnxValue.CreateFromTensor(name, tensor));
-            }
+            var tensor = new DenseTensor<float>(inputData.SelectMany(x => x).ToArray(), new int[] { inputData.Length, inputData[0].Length });
 
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine("Input Tensors: ");
-            Console.WriteLine(inputTensors.Capacity);
-            Console.WriteLine("=====================================================================");
-            // Run inference
-            IEnumerable<NamedOnnxValue> outputs = session.Run(inputTensors.ToArray());
+            inputTensors.Add(NamedOnnxValue.CreateFromTensor(inputNames[0], tensor));
 
-            // Get the predicted class index (assuming single output)
-            var output = outputs.FirstOrDefault();
-            var outputData = output.AsTensor<float>();
-            Console.WriteLine("=====================================================================");
-            Console.WriteLine("Testing!!!!");
-            Console.WriteLine(outputs.Count());
-            Console.WriteLine(outputs.ToList());
-            Console.WriteLine("=====================================================================");
-            // int predictedClassIndex = Array.IndexOf(outputData.Cast<float>().ToArray(), outputData.Max());
+            IEnumerable<DisposableNamedOnnxValue> outputs = session.Run(inputTensors);
 
-            // return new[] { predictedClassIndex };  // Return array with single prediction
+            // Set the threshold to assign multiple classes.
+            float threshold = 0.1F;
+
+            var predictedProbabilities = outputs.Last().AsEnumerable<NamedOnnxValue>().First().AsDictionary<string, float>(); // The probabilities belongs to each class.
+            var predictedClass = outputs.First().AsTensor<string>()[0]; // The class with the highest probability.
+            var predictedClasses = predictedProbabilities.Where(item => item.Value > threshold).Select(item => item.Key).ToList(); // The classes with the probability greater than threshold value.
+
+            return predictedClasses;
+        }
+
+        public List<string> Classify(byte[] docBytes, string docName)
+        {
+            // Extract the document text from document file.
+            string documentText = DocumentTextExtraction(docBytes, docName);
+
+            // Preprocess the document text.
+            documentText = PreprocessText(documentText);
+
+            // Convert the preprocessed document text to features.
+            var features = Transform(documentText);
+
+            // Make prediction
+            var prediction = Predict(features);
+
+            return prediction;
         }
     }
 }

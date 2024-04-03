@@ -11,8 +11,11 @@ namespace IntelliDoc_API.Controllers
     [ApiController]
     public class RepositoryController : BaseController
     {
-        public RepositoryController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
+        protected readonly ModelService modelService;
+
+        public RepositoryController(IConfiguration configuration, UserService userService, ModelService modelService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
+            this.modelService = modelService;
         }
 
         // Get the options for filters.
@@ -22,8 +25,7 @@ namespace IntelliDoc_API.Controllers
         {
             var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
                 .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name, type = x.Type });
-            var docCategoryList = context.DocumentCategories.ToList()
-                .OrderBy(a => a.Name).GroupBy(a => a.Name).Select(a => a.Key);
+            var docCategoryList = modelService.GetCategoryList().ToList().OrderBy(a => a);
 
             return Ok(new { docNameList, docCategoryList });
         }
@@ -34,13 +36,13 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
             var l = context.Documents
-                .Include(a => a.Category).Include(a => a.ModifiedBy)
+                .Include(a => a.ModifiedBy)
                 .Where(a => a.IsAllVersionsArchived == false)
                 .Select(x => new
                 {
                     id = x.Id,
                     name = x.Name,
-                    category = x.Category.Name,
+                    category = x.Category,
                     modifiedById = x.ModifiedById,
                     modifiedBy = x.ModifiedBy.FullName,
                     modifiedDate = x.ModifiedDate,
@@ -50,7 +52,7 @@ namespace IntelliDoc_API.Controllers
             if (dto.DocId != null)
                 l = l.Where(a => a.id == dto.DocId);
             if (dto.Category != null)
-                l = l.Where(a => a.category == dto.Category);
+                l = l.Where(a => a.category.Contains(dto.Category));
             if (dto.Type != null)
                 l = l.Where(a => a.type == dto.Type);
             l.ToList();
@@ -95,6 +97,15 @@ namespace IntelliDoc_API.Controllers
             return Ok(document.Attachment);
         }
 
+        // Classify the document.
+        [HttpPost]
+        [Route("Classify")]
+        public IActionResult PredictDocumentClasses([FromBody] RepositoryCreate dto)
+        {
+            var classification = modelService.Classify(dto.Attachment, dto.Name);
+            return Ok(classification);
+        }
+
         // Upload and create the new document.
         [HttpPost]
         [Route("")]
@@ -106,13 +117,13 @@ namespace IntelliDoc_API.Controllers
             if (existingDoc)
                 throw new Exception("The document name already exists");
 
-            string modelDir = Path.Combine(Environment.CurrentDirectory, "intelligent_document_classification_model.pkl");
-            // ITransformer loadedModel = LogisticRegression.LoadFromModelFile(modelDir, context);
+            var classification = modelService.Classify(dto.Attachment, dto.Name);
+            string assignedCategories = string.Join(", ", classification.OrderBy(a => a));
 
             var document = new Document
             {
                 Name = dto.Name,
-                CategoryId = 1,
+                Category = assignedCategories == "" ? "Others" : assignedCategories,
                 CreatedById = user.Id,
                 CreatedDate = DateTime.Now,
                 ModifiedById = user.Id,

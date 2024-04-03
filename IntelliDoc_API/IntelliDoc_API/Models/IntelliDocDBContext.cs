@@ -17,7 +17,6 @@ namespace IntelliDoc_API.Models
         }
 
         public virtual DbSet<Document> Documents { get; set; } = null!;
-        public virtual DbSet<DocumentCategory> DocumentCategories { get; set; } = null!;
         public virtual DbSet<DocumentVersionHistory> DocumentVersionHistories { get; set; } = null!;
         public virtual DbSet<Notification> Notifications { get; set; } = null!;
         public virtual DbSet<Page> Pages { get; set; } = null!;
@@ -42,7 +41,7 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
+                entity.Property(e => e.Category).IsUnicode(false);
 
                 entity.Property(e => e.CreatedById).HasColumnName("CreatedByID");
 
@@ -58,12 +57,6 @@ namespace IntelliDoc_API.Models
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Category)
-                    .WithMany(p => p.Documents)
-                    .HasForeignKey(d => d.CategoryId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Document_DocumentCategory");
-
                 entity.HasOne(d => d.CreatedBy)
                     .WithMany(p => p.DocumentCreatedBies)
                     .HasForeignKey(d => d.CreatedById)
@@ -73,15 +66,6 @@ namespace IntelliDoc_API.Models
                     .WithMany(p => p.DocumentModifiedBies)
                     .HasForeignKey(d => d.ModifiedById)
                     .HasConstraintName("FK_Document_ModifiedByUser");
-            });
-
-            modelBuilder.Entity<DocumentCategory>(entity =>
-            {
-                entity.ToTable("DocumentCategory");
-
-                entity.Property(e => e.Id).HasColumnName("ID");
-
-                entity.Property(e => e.Name).IsUnicode(false);
             });
 
             modelBuilder.Entity<DocumentVersionHistory>(entity =>

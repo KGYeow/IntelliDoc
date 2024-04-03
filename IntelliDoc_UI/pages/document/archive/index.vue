@@ -73,10 +73,20 @@
               <tr>
                 <td style="max-width: 500px;">
                   <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
-                    {{ item.name }}
+                    <span>
+                      <v-tooltip :text="item.name" activator="parent" location="top" offset="2"/>
+                      {{ item.name }}
+                    </span>
                   </v-list-item>
                 </td>
-                <td>{{ item.category }}</td>
+                <td style="max-width: 250px;">
+                  <v-list-item class="p-0 text-nowrap">
+                    <span>
+                      <v-tooltip :text="item.category" activator="parent" location="top" offset="2"/>
+                      {{ item.category }}
+                    </span>
+                  </v-list-item>
+                </td>
                 <td>
                   <ul class="m-0 list-inline hstack">
                     <li>

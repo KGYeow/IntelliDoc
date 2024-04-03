@@ -38,7 +38,9 @@
           </v-col>
           <v-col class="pe-0" cols="2">
             <v-select
-              :items="['PDF', 'Word']"
+              :items="docTypeList"
+              item-title="name"
+              item-value="name"
               placeholder="File Type"
               density="compact"
               variant="outlined"
@@ -90,14 +92,30 @@
               <tr>
                 <td style="max-width: 420px;">
                   <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
-                    {{ item.name }}
+                    <span>
+                      <v-tooltip :text="item.name" activator="parent" location="top" offset="2"/>
+                      {{ item.name }}
+                    </span>
                   </v-list-item>
                 </td>
-                <td>{{ item.category }}</td>
+                <td style="max-width: 150px;">
+                  <v-list-item class="p-0 text-nowrap">
+                    <span>
+                      <v-tooltip :text="item.category" activator="parent" location="top" offset="2"/>
+                      {{ item.category }}
+                    </span>
+                  </v-list-item>
+                </td>
                 <td style="max-width: 150px;">
                   <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
-                    <span v-if="item.modifiedBy">{{ item.modifiedBy }}</span>
-                    <span class="text-muted fst-italic" v-else>Deleted Account</span>
+                    <span v-if="item.modifiedBy">
+                      <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2"/>
+                      {{ item.modifiedBy }}
+                    </span>
+                    <span class="text-muted fst-italic" v-else>
+                      <v-tooltip text="Deleted Account" activator="parent" location="top" offset="2"/>
+                      Deleted Account
+                    </span>
                   </v-list-item>
                 </td>
                 <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>
@@ -226,6 +244,10 @@ const docSearchList = filterOption.value.docNameList.map(item => {
     prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
   }
 })
+const docTypeList = ref([
+  { name: "PDF", prependIcon: "mdi-file-pdf-box" },
+  { name: "Word", prependIcon: "mdi-file-word-box" },
+])
 
 // Head
 useHead({
@@ -289,7 +311,8 @@ const addDoc = async() => {
 
       if (getFileType(addDocInfo.value.name) == null)
         return ElNotification.warning({ message: "The document type must be in PDF or Word" })
-
+      var testing = addDocInfo.value.attachmentInfo
+      console.log(testing);
       try {
         const result = await useFetchCustom.$post("/Repository", {
           name: addDocInfo.value.name,
@@ -298,6 +321,7 @@ const addDoc = async() => {
         })
 
         if (!result.error) {
+          console.log(result)
           addDocInfo.value.name = null
           addDocInfo.value.type = null
           addDocInfo.value.attachment = null

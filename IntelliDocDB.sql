@@ -89,7 +89,7 @@ GO
 CREATE TABLE [dbo].[Document](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](max) NOT NULL,
-	[CategoryID] [int] NOT NULL,
+	[Category] [varchar](MAX) NOT NULL,
 	[CreatedByID] [int] NULL,
 	[CreatedDate] [datetime] NOT NULL,
 	[ModifiedByID] [int] NULL,
@@ -104,7 +104,7 @@ CREATE TABLE [dbo].[Document](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[DocumentCategory]    Script Date: 10/11/2023 2:46:57 PM ******/
-SET ANSI_NULLS ON
+/*SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
@@ -116,7 +116,7 @@ CREATE TABLE [dbo].[DocumentCategory](
 	[ID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
+GO*/
 /****** Object:  Table [dbo].[DocumentVersionHistory]    Script Date: 10/11/2023 2:48:32 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -177,7 +177,7 @@ INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (7, 2, 3)
 SET IDENTITY_INSERT [dbo].[RoleAccessPage] OFF
 GO
 
-SET IDENTITY_INSERT [dbo].[DocumentCategory] ON
+/*SET IDENTITY_INSERT [dbo].[DocumentCategory] ON
 INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (1, N'Business')
 INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (2, N'Entertainment')
 INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (3, N'Food')
@@ -189,7 +189,7 @@ INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (8, N'Space')
 INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (9, N'Sport')
 INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (10, N'Technologie')
 SET IDENTITY_INSERT [dbo].[DocumentCategory] OFF
-GO
+GO*/
 
 ALTER TABLE [dbo].[User] WITH CHECK ADD CONSTRAINT [FK_User_UserRole] FOREIGN KEY([UserRoleID])
 REFERENCES [dbo].[UserRole] ([ID])
@@ -214,11 +214,11 @@ GO
 ALTER TABLE [dbo].[Notification] CHECK CONSTRAINT [FK_Notification_User]
 GO
 
-ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_DocumentCategory] FOREIGN KEY([CategoryID])
+/*ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_DocumentCategory] FOREIGN KEY([CategoryID])
 REFERENCES [dbo].[DocumentCategory] ([ID])
 GO
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_DocumentCategory]
-GO
+GO*/
 ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_CreatedByUser] FOREIGN KEY([CreatedByID])
 REFERENCES [dbo].[User] ([ID])
 GO

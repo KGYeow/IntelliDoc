@@ -10,8 +10,11 @@ namespace IntelliDoc_API.Controllers
     [ApiController]
     public class DashboardController : BaseController
     {
-        public DashboardController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
+        protected readonly ModelService modelService;
+
+        public DashboardController(IConfiguration configuration, UserService userService, ModelService modelService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
+            this.modelService = modelService;
         }
 
         // Get the Dashboard data.
@@ -19,23 +22,23 @@ namespace IntelliDoc_API.Controllers
         [Route("DashboardData")]
         public IActionResult DashboardData()
         {
-            var docCategory = context.DocumentCategories.Select(d => d.Name).ToList();
+            var docCategory = modelService.GetCategoryList().ToList().OrderBy(a => a);
 
             var storedDocNum = new List<int>();
-            for (int i = 1; i <= docCategory.Count; i++)
-                storedDocNum.Add(context.Documents.Where(d => d.IsAllVersionsArchived == false && d.CategoryId == i).Count());
+            for (int i = 0; i < docCategory.Count(); i++)
+                storedDocNum.Add(context.Documents.Where(d => d.IsAllVersionsArchived == false && d.Category.Contains(docCategory.ElementAt(i))).Count());
 
             var archivedDocNum = new List<int>();
-            for (int i = 1; i <= docCategory.Count; i++)
-                archivedDocNum.Add(context.Documents.Where(d => d.HaveArchivedDocVersion == true && d.CategoryId == i).Count());
+            for (int i = 0; i < docCategory.Count(); i++)
+                archivedDocNum.Add(context.Documents.Where(d => d.HaveArchivedDocVersion == true && d.Category.Contains(docCategory.ElementAt(i))).Count());
 
             var yAxisMax = storedDocNum.Concat(archivedDocNum).Max() < 10 ? 10 : storedDocNum.Concat(archivedDocNum).Max();
 
             var totalStoredDoc = context.Documents.Where(d => d.IsAllVersionsArchived == false).Count();
 
             var storedDoc = new List<StoredDoc>();
-            for (int i = 0; i < docCategory.Count; i++)
-                storedDoc.Add(new StoredDoc { Category = docCategory[i], Frequency = storedDocNum[i] });
+            for (int i = 0; i < docCategory.Count(); i++)
+                storedDoc.Add(new StoredDoc { Category = docCategory.ElementAt(i), Frequency = storedDocNum[i] });
             var top3Categories = storedDoc.OrderByDescending(d => d.Frequency).Take(3).ToList();
             var top3CategoriesName = top3Categories.Select(d => d.Category).ToList();
             var top3CategoriesFrequency = top3Categories.Select(d => d.Frequency).ToList();
