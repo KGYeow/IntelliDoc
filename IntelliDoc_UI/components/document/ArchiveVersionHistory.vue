@@ -19,7 +19,12 @@
         <template #item="{ item }">
           <tr>
             <td>{{ item.version }}</td>
-            <td>{{ dayjs(item.archivedDate).format("DD MMM YYYY, hh:mm A") }}</td>
+            <td>
+              <span>
+                <v-tooltip :text="dayjs(item.archivedDate).format('DD MMM YYYY, hh:mm A')" activator="parent" location="top" offset="2"/>
+                {{ dayjs(item.archivedDate).format("DD MMM YYYY") }}
+              </span>
+            </td>
             <td>
               <ul class="m-0 list-inline hstack">
                 <li>

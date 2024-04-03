@@ -7,7 +7,7 @@
         :headers="[
           { key: 'version', title: 'Version' },
           { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
-          { key: 'modifiedDate', title: 'Modified Time', minWidth: '200' },
+          { key: 'modifiedDate', title: 'Modified Time', minWidth: '100' },
           { key: 'actions', sortable: false, width: 0 },
         ]"
         :sort-by="[{ key: 'version', order: 'desc' }]"
@@ -22,11 +22,22 @@
             <td>{{ item.version }}</td>
             <td style="max-width: 150px;">
               <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
-                <span v-if="item.modifiedBy">{{ item.modifiedBy }}</span>
-                <span class="text-muted fst-italic" v-else>Deleted Account</span>
+                <span v-if="item.modifiedBy">
+                  <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2"/>
+                  {{ item.modifiedBy }}
+                </span>
+                <span class="text-muted fst-italic" v-else>
+                  <v-tooltip text="Deleted Account" activator="parent" location="top" offset="2"/>
+                  Deleted Account
+                </span>
               </v-list-item>
             </td>
-            <td>{{ item.modifiedDate ? dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") : "-" }}</td>
+            <td>
+              <span>
+                <v-tooltip :text="dayjs(item.modifiedDate).format('DD MMM YYYY, hh:mm A')" activator="parent" location="top" offset="2"/>
+                {{ dayjs(item.modifiedDate).format("DD MMM YYYY") }}
+              </span>
+            </td>
             <td>
               <ul class="m-0 list-inline hstack">
                 <li>

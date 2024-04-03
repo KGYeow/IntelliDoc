@@ -18,7 +18,7 @@
               item-props
               hide-details
               :menu-props="{ width: '0'}"
-            />     
+            />
           </v-col>
           <v-col class="pe-0" cols="3">
             <v-select
@@ -30,9 +30,10 @@
               variant="outlined"
               v-model="filter.category"
               hide-details
-            >     
+            >
               <template #prepend-item>
                 <v-list-item title="All Categories" @click="filter.category = null"/>
+                <v-divider class="m-2"/>
               </template>
             </v-select>
           </v-col>
@@ -45,10 +46,12 @@
               density="compact"
               variant="outlined"
               v-model="filter.type"
+              item-props
               hide-details
             >     
               <template #prepend-item>
                 <v-list-item title="All Categories" @click="filter.type = null"/>
+                <v-divider class="m-2"/>
               </template>
             </v-select>
           </v-col>
@@ -78,7 +81,7 @@
               { key: 'name', title: 'Name' },
               { key: 'category', title: 'Category', minWidth: '150' },
               { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
-              { key: 'modifiedDate', title: 'Modified Time', minWidth: '200' },
+              { key: 'modifiedDate', title: 'Modified Time', minWidth: '100' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
             :sort-by="[{ key: 'name', order: 'asc' }]"
@@ -118,7 +121,12 @@
                     </span>
                   </v-list-item>
                 </td>
-                <td>{{ dayjs(item.modifiedDate).format("DD MMM YYYY, hh:mm A") }}</td>
+                <td>
+                  <span>
+                    <v-tooltip :text="dayjs(item.modifiedDate).format('DD MMM YYYY, hh:mm A')" activator="parent" location="top" offset="2"/>
+                    {{ dayjs(item.modifiedDate).format("DD MMM YYYY") }}
+                  </span>
+                </td>
                 <td>
                   <ul class="m-0 list-inline hstack">
                     <li>
@@ -155,6 +163,7 @@
                           <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
                           <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
+                          <v-divider class="m-2"/>
                           <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
                         </v-list>
                       </v-menu>
@@ -311,8 +320,7 @@ const addDoc = async() => {
 
       if (getFileType(addDocInfo.value.name) == null)
         return ElNotification.warning({ message: "The document type must be in PDF or Word" })
-      var testing = addDocInfo.value.attachmentInfo
-      console.log(testing);
+
       try {
         const result = await useFetchCustom.$post("/Repository", {
           name: addDocInfo.value.name,
@@ -321,7 +329,6 @@ const addDoc = async() => {
         })
 
         if (!result.error) {
-          console.log(result)
           addDocInfo.value.name = null
           addDocInfo.value.type = null
           addDocInfo.value.attachment = null

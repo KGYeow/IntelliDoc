@@ -33,22 +33,34 @@
             >     
               <template #prepend-item>
                 <v-list-item title="All Categories" @click="filter.category = null"/>
+                <v-divider class="m-2"/>
               </template>
             </v-select>
           </v-col>
           <v-col class="pe-0" cols="2">
             <v-select
-              :items="['PDF', 'Word']"
+              :items="docTypeList"
+              item-title="name"
+              item-value="name"
               placeholder="File Type"
               density="compact"
               variant="outlined"
               v-model="filter.type"
+              item-props
               hide-details
-            >     
+            >
               <template #prepend-item>
                 <v-list-item title="All Categories" @click="filter.type = null"/>
+                <v-divider class="m-2"/>
               </template>
             </v-select>
+          </v-col>
+        </v-row>
+        <v-divider/>
+        <v-row>
+          <v-col>
+            <!-- Empty Archive -->
+            <v-btn class="float-end" color="primary" prepend-icon="mdi-trash-can-outline" flat @click="">Empty Archive</v-btn>
           </v-col>
         </v-row>
 
@@ -174,6 +186,10 @@ const docSearchList = filterOption.value.docNameList.map(item => {
     prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
   }
 })
+const docTypeList = ref([
+  { name: "PDF", prependIcon: "mdi-file-pdf-box" },
+  { name: "Word", prependIcon: "mdi-file-word-box" },
+])
 
 // Head
 useHead({
