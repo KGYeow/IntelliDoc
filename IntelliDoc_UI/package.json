@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@element-plus/nuxt": "^1.0.7",
+    "@element-plus/nuxt": "^1.0.8",
     "@mdi/font": "^7.3.67",
     "@popperjs/core": "^2.11.8",
     "@sidebase/nuxt-auth": "^0.6.7",

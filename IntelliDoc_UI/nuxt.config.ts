@@ -14,8 +14,6 @@ export default defineNuxtConfig({
         { hid: 'description', name: 'description', content: '' },
       ],
     },
-    baseURL: 'https://kgyeow.github.io/IntelliDoc/IntelliDoc_UI',
-    buildAssetsDir: 'assets',
   },
 
   // Global css: https://nuxt.com/docs/api/configuration/nuxt-config#css
