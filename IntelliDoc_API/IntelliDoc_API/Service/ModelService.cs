@@ -36,7 +36,7 @@ namespace IntelliDoc_API.Service
 
         public string[] GetCategoryList()
         {
-            string[] categories = new string[] { "Business", "Entertainment", "Food", "Graphics", "Historical", "Medical", "Politics", "Space", "Sport", "Technologie", "Others" };
+            string[] categories = new string[] { "Academic", "Administrative", "Co-curricular", "Financial", "IT & Technology", "Personnel", "Others" };
             return categories;
         }
 
