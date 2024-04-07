@@ -42,7 +42,9 @@ namespace IntelliDoc_API.Controllers
                 {
                     id = x.Id,
                     name = x.Name,
+                    description = x.Description,
                     category = x.Category,
+                    currentVersion = x.CurrentVersion,
                     modifiedById = x.ModifiedById,
                     modifiedBy = x.ModifiedBy.FullName,
                     modifiedDate = x.ModifiedDate,
@@ -124,6 +126,7 @@ namespace IntelliDoc_API.Controllers
             {
                 Name = dto.Name,
                 Category = assignedCategories == "" ? "Others" : assignedCategories,
+                CurrentVersion = 1,
                 CreatedById = user.Id,
                 CreatedDate = DateTime.Now,
                 ModifiedById = user.Id,
@@ -159,6 +162,7 @@ namespace IntelliDoc_API.Controllers
             var previousDocVersion = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).OrderByDescending(d => d.Id).FirstOrDefault();
 
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            existingDoc.CurrentVersion = previousDocVersion.Version + 1;
             existingDoc.ModifiedById = user.Id;
             existingDoc.ModifiedDate = DateTime.Now;
             context.Documents.Update(existingDoc);
@@ -238,6 +242,7 @@ namespace IntelliDoc_API.Controllers
                     .OrderByDescending(d => d.Id)
                     .FirstOrDefault();
 
+                existingDoc.CurrentVersion = latestDocVersion.Version;
                 existingDoc.ModifiedById = latestDocVersion.ModifiedById;
                 existingDoc.ModifiedDate = latestDocVersion.ModifiedDate;
 

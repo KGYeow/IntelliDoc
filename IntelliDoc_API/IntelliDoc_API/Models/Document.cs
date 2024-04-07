@@ -7,12 +7,15 @@ namespace IntelliDoc_API.Models
     {
         public Document()
         {
+            DocumentUserActions = new HashSet<DocumentUserAction>();
             DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
         }
 
         public int Id { get; set; }
         public string Name { get; set; } = null!;
+        public string? Description { get; set; }
         public string Category { get; set; } = null!;
+        public int CurrentVersion { get; set; }
         public int? CreatedById { get; set; }
         public DateTime CreatedDate { get; set; }
         public int? ModifiedById { get; set; }
@@ -23,6 +26,7 @@ namespace IntelliDoc_API.Models
 
         public virtual User? CreatedBy { get; set; }
         public virtual User? ModifiedBy { get; set; }
+        public virtual ICollection<DocumentUserAction> DocumentUserActions { get; set; }
         public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
     }
 }

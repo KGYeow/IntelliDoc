@@ -56,21 +56,6 @@
             </v-select>
           </v-col>
         </v-row>
-        <v-divider/>
-        <v-row>
-          <v-col>
-            <!-- Add New Document -->
-            <v-file-input
-              class="d-none"
-              ref="addDocInput"
-              v-model:model-value="addDocInfo.attachmentInfo"
-              @update:model-value="addDoc"
-              :accept="`application/pdf, .doc,.docx,.xml, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document`"
-              hide-details
-            />
-            <v-btn class="float-end" color="primary" prepend-icon="mdi-file-document-plus-outline" flat @click="addDocInput.click()">New Document</v-btn>
-          </v-col>
-        </v-row>
 
         <!-- Document List Table -->
         <div class="text-body-1 overflow-hidden">
@@ -91,12 +76,12 @@
             :items-per-page="itemsPerPage"
             hover
           >
-            <template #item="{ item, internalItem, toggleExpand, isExpanded }">
-              <tr :class="{ 'bg-background': isExpanded(internalItem)} ">
+            <template #item="{ item }">
+              <tr>
                 <td style="max-width: 420px;">
                   <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
-                    <span class="row-link" @click="toggleExpand(internalItem)">
-                      <v-tooltip :text="item.name" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
+                    <span>
+                      <v-tooltip :text="item.name" activator="parent" location="top" offset="2"/>
                       {{ item.name }}
                     </span>
                   </v-list-item>
@@ -169,24 +154,6 @@
                       </v-menu>
                     </li>
                   </ul>
-                </td>
-              </tr>
-            </template>
-            <template #expanded-row="{ columns, item }">
-              <tr class="expanded">
-                <td :colspan="columns.length">
-                  More info about {{ item.name }}
-                  <v-row>
-                    <v-col cols="6" class="pb-0">
-                      <v-label class="text-caption">Document Name</v-label>
-                      <v-text-field
-                        variant="outlined"
-                        density="compact"
-                        v-model="item.name"
-                        hide-details
-                      />
-                    </v-col>
-                  </v-row>
                 </td>
               </tr>
             </template>
@@ -278,7 +245,7 @@ const docTypeList = ref([
 
 // Head
 useHead({
-  title: "Repository | USM Document Management System",
+  title: "Flagged | USM Document Management System",
 })
 
 // Page Meta
@@ -290,7 +257,7 @@ definePageMeta({
       disabled: false,
     },
     {
-      title: 'Repository',
+      title: 'Flagged',
       disabled: false,
     },
   ],

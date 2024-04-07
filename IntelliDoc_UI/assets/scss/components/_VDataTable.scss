@@ -11,15 +11,17 @@
     tr {
       transition: all 0.1s ease-in-out;
 
-      .row-link {
-        color: #000000de;
-        text-decoration: none;
+      &.expanded {
+        td {
+          padding: 20px 30px 25px 30px !important;
+        }
       }
 
-      &:hover {
-        .row-link {
+      .row-link {
+        &:hover {
           color: rgb(var(--v-theme-secondary)) !important;
           text-decoration: underline;
+          cursor: pointer;
         }
       }
 

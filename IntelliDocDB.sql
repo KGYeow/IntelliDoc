@@ -89,7 +89,9 @@ GO
 CREATE TABLE [dbo].[Document](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](max) NOT NULL,
+	[Description] [varchar](max) NULL,
 	[Category] [varchar](MAX) NOT NULL,
+	[CurrentVersion] [int] NOT NULL,
 	[CreatedByID] [int] NULL,
 	[CreatedDate] [datetime] NOT NULL,
 	[ModifiedByID] [int] NULL,
@@ -103,20 +105,22 @@ CREATE TABLE [dbo].[Document](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[DocumentCategory]    Script Date: 10/11/2023 2:46:57 PM ******/
-/*SET ANSI_NULLS ON
+/****** Object:  Table [dbo].[DocumentUserAction]    Script Date: 7/4/2023 2:52:00 PM ******/
+SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[DocumentCategory](
-	[ID] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [varchar](max) NOT NULL,
- CONSTRAINT [PK_DocumentCategory] PRIMARY KEY CLUSTERED 
+CREATE TABLE [dbo].[DocumentUserAction](
+	[UserID] [int] NOT NULL,
+	[DocumentID] [int] NOT NULL,
+	[IsFlagged] [bit] NOT NULL,
+ CONSTRAINT [PK_DocumentUserAction] PRIMARY KEY CLUSTERED 
 (
-	[ID] ASC
+	[UserID] ASC,
+	[DocumentID] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO*/
+) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[DocumentVersionHistory]    Script Date: 10/11/2023 2:48:32 PM ******/
 SET ANSI_NULLS ON
 GO
@@ -157,9 +161,10 @@ GO
 
 SET IDENTITY_INSERT [dbo].[Page] ON
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (1, N'Dashboard', N'Dashboard')
-INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (2, N'Repository', N'Repository')
-INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (3, N'Archive', N'Archive')
-INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (4, N'User Setting', N'UserSetting')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (2, N'Repository', N'DocumentRepository')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (3, N'Flag', N'DocumentFlag')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (4, N'Archive', N'DocumentArchive')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (5, N'User Setting', N'ConfigurationUserSetting')
 SET IDENTITY_INSERT [dbo].[Page] OFF
 GO
 
@@ -169,27 +174,14 @@ INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (1, 1, 1)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (2, 1, 2)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (3, 1, 3)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (4, 1, 4)
-
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (5, 1, 5)
 /** Staff **/
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (5, 2, 1)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 2, 2)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (7, 2, 3)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 2, 1)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (7, 2, 2)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (8, 2, 3)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (9, 2, 4)
 SET IDENTITY_INSERT [dbo].[RoleAccessPage] OFF
 GO
-
-/*SET IDENTITY_INSERT [dbo].[DocumentCategory] ON
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (1, N'Business')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (2, N'Entertainment')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (3, N'Food')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (4, N'Graphics')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (5, N'Historical')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (6, N'Medical')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (7, N'Politics')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (8, N'Space')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (9, N'Sport')
-INSERT [dbo].[DocumentCategory] ([ID], [Name]) VALUES (10, N'Technologie')
-SET IDENTITY_INSERT [dbo].[DocumentCategory] OFF
-GO*/
 
 ALTER TABLE [dbo].[User] WITH CHECK ADD CONSTRAINT [FK_User_UserRole] FOREIGN KEY([UserRoleID])
 REFERENCES [dbo].[UserRole] ([ID])
@@ -214,11 +206,6 @@ GO
 ALTER TABLE [dbo].[Notification] CHECK CONSTRAINT [FK_Notification_User]
 GO
 
-/*ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_DocumentCategory] FOREIGN KEY([CategoryID])
-REFERENCES [dbo].[DocumentCategory] ([ID])
-GO
-ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_DocumentCategory]
-GO*/
 ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_CreatedByUser] FOREIGN KEY([CreatedByID])
 REFERENCES [dbo].[User] ([ID])
 GO
@@ -228,6 +215,17 @@ ALTER TABLE [dbo].[Document] WITH CHECK ADD CONSTRAINT [FK_Document_ModifiedByUs
 REFERENCES [dbo].[User] ([ID])
 GO
 ALTER TABLE [dbo].[Document] CHECK CONSTRAINT [FK_Document_ModifiedByUser]
+GO
+
+ALTER TABLE [dbo].[DocumentUserAction] WITH CHECK ADD CONSTRAINT [FK_DocumentUserAction_User] FOREIGN KEY([UserID])
+REFERENCES [dbo].[User] ([ID])
+GO
+ALTER TABLE [dbo].[DocumentUserAction] CHECK CONSTRAINT [FK_DocumentUserAction_User]
+GO
+ALTER TABLE [dbo].[DocumentUserAction] WITH CHECK ADD CONSTRAINT [FK_DocumentUserAction_Document] FOREIGN KEY([DocumentID])
+REFERENCES [dbo].[Document] ([ID])
+GO
+ALTER TABLE [dbo].[DocumentUserAction] CHECK CONSTRAINT [FK_DocumentUserAction_Document]
 GO
 
 ALTER TABLE [dbo].[DocumentVersionHistory] WITH CHECK ADD CONSTRAINT [FK_DocumentVersionHistory_Document] FOREIGN KEY([DocumentID])

@@ -9,6 +9,7 @@ namespace IntelliDoc_API.Models
         {
             DocumentCreatedBies = new HashSet<Document>();
             DocumentModifiedBies = new HashSet<Document>();
+            DocumentUserActions = new HashSet<DocumentUserAction>();
             DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
             Notifications = new HashSet<Notification>();
         }
@@ -25,6 +26,7 @@ namespace IntelliDoc_API.Models
         public virtual UserRole UserRole { get; set; } = null!;
         public virtual ICollection<Document> DocumentCreatedBies { get; set; }
         public virtual ICollection<Document> DocumentModifiedBies { get; set; }
+        public virtual ICollection<DocumentUserAction> DocumentUserActions { get; set; }
         public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
     }

@@ -17,6 +17,7 @@ namespace IntelliDoc_API.Models
         }
 
         public virtual DbSet<Document> Documents { get; set; } = null!;
+        public virtual DbSet<DocumentUserAction> DocumentUserActions { get; set; } = null!;
         public virtual DbSet<DocumentVersionHistory> DocumentVersionHistories { get; set; } = null!;
         public virtual DbSet<Notification> Notifications { get; set; } = null!;
         public virtual DbSet<Page> Pages { get; set; } = null!;
@@ -47,6 +48,8 @@ namespace IntelliDoc_API.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
+                entity.Property(e => e.Description).IsUnicode(false);
+
                 entity.Property(e => e.ModifiedById).HasColumnName("ModifiedByID");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -66,6 +69,29 @@ namespace IntelliDoc_API.Models
                     .WithMany(p => p.DocumentModifiedBies)
                     .HasForeignKey(d => d.ModifiedById)
                     .HasConstraintName("FK_Document_ModifiedByUser");
+            });
+
+            modelBuilder.Entity<DocumentUserAction>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.DocumentId });
+
+                entity.ToTable("DocumentUserAction");
+
+                entity.Property(e => e.UserId).HasColumnName("UserID");
+
+                entity.Property(e => e.DocumentId).HasColumnName("DocumentID");
+
+                entity.HasOne(d => d.Document)
+                    .WithMany(p => p.DocumentUserActions)
+                    .HasForeignKey(d => d.DocumentId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentUserAction_Document");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.DocumentUserActions)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentUserAction_User");
             });
 
             modelBuilder.Entity<DocumentVersionHistory>(entity =>

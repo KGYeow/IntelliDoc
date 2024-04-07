@@ -35,14 +35,21 @@ const sidebarItem: menu[] = [
         icon: tablerIcon.BooksIcon,
         to: '/document/repository',
         auth: true,
-        accessName: "Repository",
+        accessName: "DocumentRepository",
+      },
+      {
+        title: 'Flagged',
+        icon: tablerIcon.Flag3Icon,
+        to: '/document/flag',
+        auth: true,
+        accessName: "DocumentFlag",
       },
       {
         title: 'Archive',
         icon: tablerIcon.ArchiveIcon,
         to: '/document/archive',
         auth: true,
-        accessName: "Archive",
+        accessName: "DocumentArchive",
       },
     ]
   },
@@ -55,7 +62,7 @@ const sidebarItem: menu[] = [
         icon: tablerIcon.UserCogIcon,
         to: "/configuration/user-setting",
         auth: true,
-        accessName: "UserSetting",
+        accessName: "ConfigurationUserSetting",
       },
     ]
   },

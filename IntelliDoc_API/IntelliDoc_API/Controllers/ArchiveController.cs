@@ -90,6 +90,7 @@ namespace IntelliDoc_API.Controllers
                     .FirstOrDefault();
 
                 archivedDoc.HaveArchivedDocVersion = false;
+                archivedDoc.CurrentVersion = latestDocVersion.Version;
                 archivedDoc.ModifiedById = latestDocVersion.ModifiedById;
                 archivedDoc.ModifiedDate = latestDocVersion.ModifiedDate;
                 context.Documents.Update(archivedDoc);
@@ -114,6 +115,7 @@ namespace IntelliDoc_API.Controllers
                     .OrderByDescending(d => d.Id)
                     .FirstOrDefault();
 
+                archivedDoc.CurrentVersion = latestDocVersion.Version;
                 archivedDoc.ModifiedById = latestDocVersion.ModifiedById;
                 archivedDoc.ModifiedDate = latestDocVersion.ModifiedDate;
                 context.Documents.Update(archivedDoc);
