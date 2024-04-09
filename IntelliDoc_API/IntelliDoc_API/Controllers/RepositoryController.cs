@@ -203,6 +203,19 @@ namespace IntelliDoc_API.Controllers
             }
         }
 
+        // Edit the description of existing document.
+        [HttpPut]
+        [Route("Description/{DocId}")]
+        public IActionResult EditDescription(int docId, [FromBody] RepositoryDescription dto)
+        {
+            var user = userService.GetUser(User);
+            var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            existingDoc.Description = dto.Description;
+            context.Documents.Update(existingDoc);
+            context.SaveChanges();
+            return Ok(new Response { Status = "Success", Message = "Description edited successfully" });
+        }
+
         // Archive the existing document or its specific version.
         [HttpPut]
         [Route("Archive/{DocId}/{Version}")]

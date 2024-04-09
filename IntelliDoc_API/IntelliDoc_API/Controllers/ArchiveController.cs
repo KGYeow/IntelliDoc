@@ -3,7 +3,6 @@ using IntelliDoc_API.Dto.Document;
 using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -174,6 +173,35 @@ namespace IntelliDoc_API.Controllers
             }
 
             return Ok(new Response { Status = "Success", Message = msg });
+        }
+
+        // Delete all the archived document and its archived version permanently from the archive list.
+        [HttpDelete]
+        [Route("Delete/All")]
+        public IActionResult DeleteAllPermanently()
+        {
+            // var user = userService.GetUser(User);
+            var archivedVersionHistories = context.DocumentVersionHistories.Where(d => d.IsArchived == true).ToList();
+            context.DocumentVersionHistories.RemoveRange(archivedVersionHistories);
+            context.SaveChanges();
+
+            var existingArchivedDocIdList = context.Documents.Where(d => d.HaveArchivedDocVersion == true).Select(x => x.Id).ToList();
+            foreach(var docId in existingArchivedDocIdList)
+            {
+                var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+                var isDocVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).Any();
+
+                if (!isDocVersionExist)
+                    context.Documents.Remove(existingDoc);
+                else
+                {
+                    existingDoc.HaveArchivedDocVersion = false;
+                    existingDoc.IsAllVersionsArchived = false;
+                    context.Documents.Update(existingDoc);
+                }
+                context.SaveChanges();
+            }
+            return Ok(new Response { Status = "Success", Message = "All archived documents have been deleted successfully" });
         }
     }
 }

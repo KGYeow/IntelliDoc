@@ -104,7 +104,7 @@
                 <td style="max-width: 150px;">
                   <v-list-item class="p-0 text-nowrap">
                     <span>
-                      <v-tooltip :text="item.category" activator="parent" location="top" offset="2"/>
+                      <v-tooltip :text="item.category" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                       {{ item.category }}
                     </span>
                   </v-list-item>
@@ -112,18 +112,18 @@
                 <td style="max-width: 150px;">
                   <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
                     <span v-if="item.modifiedBy">
-                      <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2"/>
+                      <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                       {{ item.modifiedBy }}
                     </span>
                     <span class="text-muted fst-italic" v-else>
-                      <v-tooltip text="Deleted Account" activator="parent" location="top" offset="2"/>
+                      <v-tooltip text="Deleted Account" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                       Deleted Account
                     </span>
                   </v-list-item>
                 </td>
                 <td>
                   <span>
-                    <v-tooltip :text="dayjs(item.modifiedDate).format('DD MMM YYYY, hh:mm A')" activator="parent" location="top" offset="2"/>
+                    <v-tooltip :text="dayjs(item.modifiedDate).format('DD MMM YYYY, hh:mm A')" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                     {{ dayjs(item.modifiedDate).format("DD MMM YYYY") }}
                   </span>
                 </td>
@@ -175,18 +175,7 @@
             <template #expanded-row="{ columns, item }">
               <tr class="expanded">
                 <td :colspan="columns.length">
-                  More info about {{ item.name }}
-                  <v-row>
-                    <v-col cols="6" class="pb-0">
-                      <v-label class="text-caption">Document Name</v-label>
-                      <v-text-field
-                        variant="outlined"
-                        density="compact"
-                        v-model="item.name"
-                        hide-details
-                      />
-                    </v-col>
-                  </v-row>
+                  <DocumentRepositoryDescriptionInfo :doc-info="item"/>
                 </td>
               </tr>
             </template>
@@ -208,7 +197,7 @@
 
   <!-- Rename Document Modal -->
   <SharedUiModal v-model="renameDocModal" title="Rename Document" width="500">
-    <DocumentRenameForm
+    <DocumentRepositoryRenameForm
       :doc-id="selectedDocInfo.id"
       :doc-name-old="selectedDocInfo.name"
       @close-modal="(e) => renameDocModal = e"
@@ -217,7 +206,7 @@
 
   <!-- Update Document Modal -->
   <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
-    <DocumentUpdateForm
+    <DocumentRepositoryUpdateForm
       :doc-id="selectedDocInfo.id"
       :doc-name="selectedDocInfo.name"
       @close-modal="(e) => editAttachmentModal = e"
@@ -258,6 +247,10 @@ const selectedDocInfo = ref({
   id: null,
   name: null,
   type: null,
+})
+const editDocDescription = ref({
+  isEdit: false,
+  description: null,
 })
 const addDocInput = ref(null)
 const renameDocModal = ref(false)
@@ -411,6 +404,20 @@ const downloadDoc = async(doc) => {
 const archiveDoc = async(docId) => {
   try {
     const result = await useFetchCustom.$put(`/Repository/Archive/${docId}/0`)
+    if (!result.error) {
+      ElNotification.success({ message: result.message })
+      refreshNuxtData()
+    }
+    else {
+      ElNotification.error({ message: result.message })
+    }
+  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
+}
+const editDescriptionDoc = async(docId) => {
+  try {
+    const result = await useFetchCustom.$put(`/Repository/Description/${docId}`, {
+      description: "New Description"
+    })
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

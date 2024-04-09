@@ -60,7 +60,7 @@
         <v-row>
           <v-col>
             <!-- Empty Archive -->
-            <v-btn class="float-end" color="primary" prepend-icon="mdi-trash-can-outline" flat @click="">Empty Archive</v-btn>
+            <v-btn class="float-end" color="primary" prepend-icon="mdi-trash-can-outline" flat @click="emptyArchiveModal = true">Empty Archive</v-btn>
           </v-col>
         </v-row>
 
@@ -157,8 +157,13 @@
   </v-row>
 
   <!-- Version History Modal -->
-  <SharedUiModal v-model="versionHistoryModal" title="Document Version History" width="600">
+  <SharedUiModal v-model="versionHistoryModal" title="Document Version History">
     <DocumentArchiveVersionHistory :doc-id="selectedDocInfo.id" @close-modal="(e) => versionHistoryModal = e"/>
+  </SharedUiModal>
+
+  <!-- Empty Archive Confirmation Modal -->
+  <SharedUiModal v-model="emptyArchiveModal">
+    <DocumentArchiveEmptyAllConfirmation @close-modal="(e) => emptyArchiveModal = e"/>
   </SharedUiModal>
 </template>
 
@@ -178,6 +183,7 @@ const selectedDocInfo = ref({
   name: null,
 })
 const versionHistoryModal = ref(false)
+const emptyArchiveModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Archive/FilterOption")
 const { data: archiveList } = await useFetchCustom.$get("/Archive/Filter", filter.value)
 const docSearchList = filterOption.value.docNameList.map(item => {
