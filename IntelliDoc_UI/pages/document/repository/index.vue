@@ -75,6 +75,7 @@
         <!-- Document List Table -->
         <div class="text-body-1 overflow-hidden">
           <v-data-table
+            @update:expanded="console.log($event)"
             density="comfortable"
             v-model:page="currentPage"
             :headers="[
@@ -89,6 +90,7 @@
             sort-asc-icon="mdi-arrow-up-thin"
             :items="docList"
             :items-per-page="itemsPerPage"
+            select-strategy="single"
             hover
           >
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
@@ -184,7 +186,7 @@
                 <el-pagination
                   layout="total, prev, pager, next"
                   v-model:current-page="currentPage"
-                  :page-size="docList.length/pageCount()" 
+                  :page-size="docList.length/pageCount()"
                   :total="docList.length"
                 />
               </div>

@@ -61,25 +61,23 @@
           <v-col class="pt-0 pb-1" cols="12" md="3" lg="3">
             <v-label class="text-caption fw-bold">
               Description
-              <v-btn class="ms-1" icon="mdi-pencil" size="x-small" density="comfortable" variant="text" @click="isEdit = true"/>
+              <v-btn class="ms-1" icon="mdi-pencil" size="x-small" density="comfortable" variant="text" @click="isEdit = true" v-if="!isEdit"/>
             </v-label>
           </v-col>
           <v-col class="pt-0 pb-1" cols="12" md="9" lg="9">
             <div class="text-body-2" v-if="!isEdit">{{ docInfo.description ?? '-' }}</div>
-            <form @submit.prevent="editDescription" v-else>
+            <form class="d-flex" @submit.prevent="editDescription" v-else>
               <v-textarea
                 density="compact"
                 variant="outlined"
                 v-model="newDocDescription"
+                auto-grow
                 hide-details
-              >
-                <template #append>
-                  <div class="d-flex flex-column">
-                    <v-btn icon="mdi-check" size="x-small" variant="text" type="submit"/>
-                    <v-btn icon="mdi-close" size="x-small" variant="text" @click="cancelEditDescription"/>
-                  </div>
-                </template>
-              </v-textarea>
+              />
+              <div class="ps-1 d-flex flex-column">
+                <v-btn icon="mdi-check" size="x-small" variant="text" type="submit"/>
+                <v-btn icon="mdi-close" size="x-small" variant="text" @click="cancelEditDescription"/>
+              </div>
             </form>
           </v-col>
       </v-row>
