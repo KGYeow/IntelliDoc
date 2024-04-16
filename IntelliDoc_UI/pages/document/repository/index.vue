@@ -82,7 +82,7 @@
               { key: 'name', title: 'Name' },
               { key: 'category', title: 'Category', minWidth: '150' },
               { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
-              { key: 'modifiedDate', title: 'Modified Time', minWidth: '100' },
+              { key: 'modifiedDate', title: 'Modified Time', width: '150' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
             :sort-by="[{ key: 'name', order: 'asc' }]"
@@ -94,7 +94,7 @@
             hover
           >
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
-              <tr :class="{ 'bg-background': isExpanded(internalItem)} ">
+              <tr :class="{ 'bg-background': isExpanded(internalItem)}">
                 <td style="max-width: 420px;">
                   <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
                     <span class="row-link" @click="toggleExpand(internalItem)">
@@ -130,7 +130,7 @@
                   </span>
                 </td>
                 <td>
-                  <ul class="m-0 list-inline hstack">
+                  <ul class="m-0 list-inline hstack actions">
                     <li>
                       <v-tooltip text="Download" location="top" offset="2">
                         <template #activator="{ props }">
@@ -153,6 +153,19 @@
                       </v-tooltip>
                     </li>
                     <li>
+                      <v-tooltip text="Flag" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn
+                            :icon="item.isFlagged ? 'mdi-flag-variant' : 'mdi-flag-variant-outline'"
+                            size="small"
+                            variant="text"
+                            @click="flagDoc(item.id)"
+                            :="props"
+                          />
+                        </template>
+                      </v-tooltip>
+                    </li>
+                    <li>
                       <v-menu width="220" location="left" offset="2">
                         <template #activator="{ props }">
                           <v-btn size="small" variant="text" :="props" icon>
@@ -164,6 +177,12 @@
                           <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item)">Download</v-list-item>
                           <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
                           <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
+                          <v-list-item
+                            :prepend-icon="item.isFlagged ? 'mdi-flag-variant' : 'mdi-flag-variant-outline'"
+                            @click="flagDoc(item.id)"
+                          >
+                            {{ item.isFlagged ? 'Unflag' : 'Flag' }}
+                          </v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
                           <v-divider class="m-2"/>
                           <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
@@ -249,10 +268,6 @@ const selectedDocInfo = ref({
   id: null,
   name: null,
   type: null,
-})
-const editDocDescription = ref({
-  isEdit: false,
-  description: null,
 })
 const addDocInput = ref(null)
 const renameDocModal = ref(false)
@@ -415,11 +430,9 @@ const archiveDoc = async(docId) => {
     }
   } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
 }
-const editDescriptionDoc = async(docId) => {
+const flagDoc = async(docId) => {
   try {
-    const result = await useFetchCustom.$put(`/Repository/Description/${docId}`, {
-      description: "New Description"
-    })
+    const result = await useFetchCustom.$put(`/Flag/${docId}`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

@@ -35,21 +35,24 @@ namespace IntelliDoc_API.Controllers
         [Route("Filter")]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
         public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
-            var l = context.Documents
-                .Include(a => a.ModifiedBy)
-                .Where(a => a.IsAllVersionsArchived == false)
-                .Select(x => new
-                {
-                    id = x.Id,
-                    name = x.Name,
-                    description = x.Description,
-                    category = x.Category,
-                    currentVersion = x.CurrentVersion,
-                    modifiedById = x.ModifiedById,
-                    modifiedBy = x.ModifiedBy.FullName,
-                    modifiedDate = x.ModifiedDate,
-                    type = x.Type,
-                });
+            var user = userService.GetUser(User);
+            var l = from doc in context.Documents.Include(a => a.ModifiedBy).Where(a => a.IsAllVersionsArchived == false)
+                    join act in context.DocumentUserActions.Where(a => a.UserId == user.Id)
+                    on doc.Id equals act.DocumentId into grouping
+                    from act in grouping.DefaultIfEmpty()
+                    select new
+                    {
+                        id = doc.Id,
+                        name = doc.Name,
+                        description = doc.Description,
+                        category = doc.Category,
+                        currentVersion = doc.CurrentVersion,
+                        modifiedById = doc.ModifiedById,
+                        modifiedBy = doc.ModifiedBy.FullName,
+                        modifiedDate = doc.ModifiedDate,
+                        type = doc.Type,
+                        isFlagged = act != null ? act.IsFlagged : false
+                    };
 
             if (dto.DocId != null)
                 l = l.Where(a => a.id == dto.DocId);

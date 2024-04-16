@@ -66,7 +66,7 @@
               { key: 'name', title: 'Name' },
               { key: 'category', title: 'Category', minWidth: '150' },
               { key: 'modifiedBy', title: 'Modified By', minWidth: '150' },
-              { key: 'modifiedDate', title: 'Modified Time', minWidth: '100' },
+              { key: 'modifiedDate', title: 'Modified Time', width: '150' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
             :sort-by="[{ key: 'name', order: 'asc' }]"
@@ -136,6 +136,19 @@
                       </v-tooltip>
                     </li>
                     <li>
+                      <v-tooltip text="Flag" location="top" offset="2">
+                        <template #activator="{ props }">
+                          <v-btn
+                            :icon="item.isFlagged ? 'mdi-flag-variant' : 'mdi-flag-variant-outline'"
+                            size="small"
+                            variant="text"
+                            @click="flagDoc(item.id)"
+                            :="props"
+                          />
+                        </template>
+                      </v-tooltip>
+                    </li>
+                    <li>
                       <v-menu width="220" location="left" offset="2">
                         <template #activator="{ props }">
                           <v-btn size="small" variant="text" :="props" icon>
@@ -147,6 +160,12 @@
                           <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item)">Download</v-list-item>
                           <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
                           <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
+                          <v-list-item
+                            :prepend-icon="item.isFlagged ? 'mdi-flag-variant' : 'mdi-flag-variant-outline'"
+                            @click="flagDoc(item.id)"
+                          >
+                            {{ item.isFlagged ? 'Unflag' : 'Flag' }}
+                          </v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
                           <v-divider class="m-2"/>
                           <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
@@ -175,7 +194,7 @@
 
   <!-- Rename Document Modal -->
   <SharedUiModal v-model="renameDocModal" title="Rename Document" width="500">
-    <DocumentRenameForm
+    <DocumentRepositoryRenameForm
       :doc-id="selectedDocInfo.id"
       :doc-name-old="selectedDocInfo.name"
       @close-modal="(e) => renameDocModal = e"
@@ -184,7 +203,7 @@
 
   <!-- Update Document Modal -->
   <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
-    <DocumentUpdateForm
+    <DocumentRepositoryUpdateForm
       :doc-id="selectedDocInfo.id"
       :doc-name="selectedDocInfo.name"
       @close-modal="(e) => editAttachmentModal = e"
@@ -215,23 +234,16 @@ const filter = ref({
   category: null,
   type: null,
 })
-const addDocInfo = ref({
-  name: null,
-  type: null,
-  attachment: null,
-  attachmentInfo: null,
-})
 const selectedDocInfo = ref({
   id: null,
   name: null,
   type: null,
 })
-const addDocInput = ref(null)
 const renameDocModal = ref(false)
 const editAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
-const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
-const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
+const { data: filterOption } = await useFetchCustom.$get("/Flag/FilterOption")
+const { data: docList } = await useFetchCustom.$get("/Flag/Filter", filter.value)
 const docSearchList = filterOption.value.docNameList.map(item => {
   return {
     ...item,
@@ -282,59 +294,6 @@ const getFileType = (docName) => {
   const ext = getFileExtension(docName)
   return extensions[ext] || null // Check for extension in map, return null if not found
 }
-const addDoc = async() => {
-  const file = addDocInfo.value.attachmentInfo[0]
-  if (file)
-  {
-    const reader = new FileReader() // Read file as DataURL using a promise-based approach
-    reader.readAsDataURL(file)
-
-    try {
-      const base64Data = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result)
-        reader.onerror = reject
-      })
-
-      addDocInfo.value.attachment = base64Data.replace(/^.+?;base64,/, '')
-      addDocInfo.value.name = file.name
-      addDocInfo.value.type = getFileType(file.name)
-
-      const fileSize = (addDocInfo.value.attachment.length * 3) / 4 / 1024 // Convert base64 size to KB
-      if (fileSize > 28000)
-        return ElNotification.warning({ message: "Document size cannot exceeds 28MB" })
-
-      if (getFileType(addDocInfo.value.name) == null)
-        return ElNotification.warning({ message: "The document type must be in PDF or Word" })
-
-      try {
-        const result = await useFetchCustom.$post("/Repository", {
-          name: addDocInfo.value.name,
-          attachment: addDocInfo.value.attachment,
-          type: addDocInfo.value.type,
-        })
-
-        if (!result.error) {
-          addDocInfo.value.name = null
-          addDocInfo.value.type = null
-          addDocInfo.value.attachment = null
-          addDocInfo.value.attachmentInfo = null
-          ElNotification.success({ message: result.message })
-          refreshNuxtData()
-        }
-        else {
-          ElNotification.error({ message: result.message })
-        }
-      } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
-
-    } catch(e) { ElNotification.error({ message: `Error reading file: ${e}` }) }
-  }
-  else {
-    addDocInfo.value.name = null
-    addDocInfo.value.type = null
-    addDocInfo.value.attachment = null
-    addDocInfo.value.attachmentInfo = null
-  }
-}
 const selectDoc = (action, doc) => {
   selectedDocInfo.value.id = doc.id
   selectedDocInfo.value.name = doc.name
@@ -378,6 +337,18 @@ const downloadDoc = async(doc) => {
 const archiveDoc = async(docId) => {
   try {
     const result = await useFetchCustom.$put(`/Repository/Archive/${docId}/0`)
+    if (!result.error) {
+      ElNotification.success({ message: result.message })
+      refreshNuxtData()
+    }
+    else {
+      ElNotification.error({ message: result.message })
+    }
+  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
+}
+const flagDoc = async(docId) => {
+  try {
+    const result = await useFetchCustom.$put(`/Flag/${docId}`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

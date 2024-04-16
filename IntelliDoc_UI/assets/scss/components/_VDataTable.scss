@@ -11,6 +11,12 @@
     tr {
       transition: all 0.1s ease-in-out;
 
+      &:hover {
+        .actions {
+          color: unset;
+        }
+      }
+
       &.expanded {
         td {
           padding: 20px 30px 25px 30px !important;
@@ -35,6 +41,10 @@
         .v-list-item__content {
           text-overflow: ellipsis
         }
+      }
+
+      .actions {
+        color: transparent;
       }
     }
   }
