@@ -75,7 +75,6 @@
         <!-- Document List Table -->
         <div class="text-body-1 overflow-hidden">
           <v-data-table
-            @update:expanded="console.log($event)"
             density="comfortable"
             v-model:page="currentPage"
             :headers="[
@@ -90,13 +89,16 @@
             sort-asc-icon="mdi-arrow-up-thin"
             :items="docList"
             :items-per-page="itemsPerPage"
-            select-strategy="single"
             hover
           >
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
-              <tr :class="{ 'bg-background': isExpanded(internalItem)}">
+              <tr :class="{ 'bg-background': isExpanded(internalItem) }">
                 <td style="max-width: 420px;">
-                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
+                  <v-list-item
+                    class="p-0 text-nowrap"
+                    :prepend-icon="'text-h5 '+ (item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box')"
+                    :append-icon="item.isFlagged ? 'mdi-flag-variant text-h5' : null"
+                  >
                     <span class="row-link" @click="toggleExpand(internalItem)">
                       <v-tooltip :text="item.name" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                       {{ item.name }}
@@ -112,7 +114,7 @@
                   </v-list-item>
                 </td>
                 <td style="max-width: 150px;">
-                  <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
+                  <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle text-h5">
                     <span v-if="item.modifiedBy">
                       <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2" v-if="!isExpanded(internalItem)"/>
                       {{ item.modifiedBy }}

@@ -26,7 +26,7 @@
               </span>
             </td>
             <td>
-              <ul class="m-0 list-inline hstack">
+              <ul class="m-0 list-inline hstack actions">
                 <li>
                   <v-tooltip text="Restore" location="top" offset="2">
                     <template #activator="{ props }">

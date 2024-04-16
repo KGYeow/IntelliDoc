@@ -9,7 +9,7 @@
 
   tbody {
     tr {
-      transition: all 0.1s ease-in-out;
+      transition: all 0.1s ease-in-out !important;
 
       &:hover {
         .actions {
@@ -23,7 +23,7 @@
         }
       }
 
-      .row-link {
+      .row-link {        
         &:hover {
           color: rgb(var(--v-theme-secondary)) !important;
           text-decoration: underline;
@@ -45,6 +45,7 @@
 
       .actions {
         color: transparent;
+        transition: all 0.1s ease-in-out;
       }
     }
   }

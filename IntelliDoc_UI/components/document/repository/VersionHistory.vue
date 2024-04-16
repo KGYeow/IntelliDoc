@@ -21,7 +21,7 @@
           <tr>
             <td>{{ item.version }}</td>
             <td style="max-width: 150px;">
-              <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle fs-5">
+              <v-list-item class="p-0 text-nowrap" prepend-icon="mdi-account-circle text-h5">
                 <span v-if="item.modifiedBy">
                   <v-tooltip :text="item.modifiedBy" activator="parent" location="top" offset="2"/>
                   {{ item.modifiedBy }}
@@ -39,7 +39,7 @@
               </span>
             </td>
             <td>
-              <ul class="m-0 list-inline hstack">
+              <ul class="m-0 list-inline hstack actions">
                 <li>
                   <v-tooltip text="Download" location="top" offset="2">
                     <template #activator="{ props }">

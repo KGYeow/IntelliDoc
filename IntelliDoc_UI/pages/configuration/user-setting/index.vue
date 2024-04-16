@@ -63,7 +63,7 @@
                 </td>
                 <td>{{ item.role }}</td>
                 <td>
-                  <ul class="m-0 list-inline hstack">
+                  <ul class="m-0 list-inline hstack actions">
                     <li>
                       <v-tooltip text="Edit" location="top" offset="2">
                         <template #activator="{ props }">

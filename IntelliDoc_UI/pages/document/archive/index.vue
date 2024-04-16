@@ -84,7 +84,7 @@
             <template #item="{ item }">
               <tr>
                 <td style="max-width: 500px;">
-                  <v-list-item class="p-0 text-nowrap" :prepend-icon="item.type == 'PDF' ? 'mdi-file-pdf-box fs-5' : 'mdi-file-word-box fs-5'">
+                  <v-list-item class="p-0 text-nowrap" :prepend-icon="'text-h5 '+ (item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box')">
                     <span>
                       <v-tooltip :text="item.name" activator="parent" location="top" offset="2"/>
                       {{ item.name }}
@@ -100,7 +100,7 @@
                   </v-list-item>
                 </td>
                 <td>
-                  <ul class="m-0 list-inline hstack">
+                  <ul class="m-0 list-inline hstack actions">
                     <li>
                       <v-tooltip text="Version History" location="top" offset="2">
                         <template #activator="{ props }">
