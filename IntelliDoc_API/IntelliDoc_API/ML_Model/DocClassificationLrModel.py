@@ -1,16 +1,36 @@
-import re
-import joblib
-import onnxruntime as ort
-from PyPDF2 import PdfReader
-from docx import Document
+#!/usr/bin/env python
+# coding: utf-8
 
+# In[12]:
+
+
+import os
+import joblib
+import json
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+
+# In[13]:
+
+
+import re
 def clean_text(text):
   text = text.lower()  # Convert to lowercase
   text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation and non-alphanumeric characters
   text = re.sub(r'\s+', ' ', text)  # Remove extra whitespace
   text = re.sub(r'\d+', '', text)  # Remove numbers
-  return text
+  return text 
 
+
+# In[14]:
+
+
+from PyPDF2 import PdfReader
+from docx import Document
 def read_document(file_path, filename):
     # Text extraction based on file extension
     if filename.endswith(".pdf"):
@@ -41,52 +61,143 @@ def read_document(file_path, filename):
     text = clean_text(text) # Implement your cleaning function here
     return text
 
+
+# In[15]:
+
+
+data_dir = r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\Dataset" # Replace with your data directory path
+documents = []
+labels = []
+for class_dir in os.listdir(data_dir):
+    class_path = os.path.join(data_dir, class_dir)
+    
+    if os.path.isdir(class_path):
+        for filename in os.listdir(class_path):
+            file_path = os.path.join(class_path, filename)
+            text = read_document(file_path, filename)
+            
+            # Skip unsupported file formats
+            if text == None:
+                continue
+
+            documents.append(text)
+            labels.append([filename, class_dir])
+
+
+# In[16]:
+
+
+# Load the dataset
+# Create a DataFrame from the collected data
+df = pd.DataFrame(labels, columns=['Doc Name', 'Class'])
+df
+
+
+# In[17]:
+
+
+# Feature extraction using TF-IDF
+vectorizer = TfidfVectorizer(max_features=1000)
+X = vectorizer.fit_transform(documents)
+y = df['Class']
+
+vectorizer_dict = {
+  "Vocabulary": {word: int(value) for word, value in vectorizer.vocabulary_.items()},
+  "IDF": vectorizer.idf_.tolist(),
+}
+with open("TFIDFvectorizer.json", "w") as f:
+  json.dump(vectorizer_dict, f)
+joblib.dump(vectorizer, 'TFIDFvectorizer.pkl')
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Logistic regression model
+model = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=800)
+trainedModel = model.fit(X_train, y_train)
+
+# dense_features = X_train.toarray()
+# model = model.fit(dense_features, y_train)
+
+
+# In[18]:
+
+
+# Make predictions on the test set
+y_pred = trainedModel.predict(X_test)
+
+# Evaluate the model
+print("Accuracy Score:", accuracy_score(y_test, y_pred), "\n")
+
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred), "\n")
+
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+
+# In[19]:
+
+
+# Use the model for prediction
+input_file_directory = r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\CAT405_SRD_Report_YeowKokGuan.pdf"
+input_file_name = input_file_directory.split("\\")[-1]
+new_document = read_document(input_file_directory, input_file_name)
+new_features = vectorizer.transform([new_document])
+prediction = trainedModel.predict(new_features)
+prediction_proba = trainedModel.predict_proba(new_features)
+
 # Function to get predicted classes exceeding the threshold
 def get_predicted_classes(probabilities):
-    threshold = 0.1
-    # class_labels = ['Business', 'Entertainment', 'Food', 'Graphics', 'Historical', 'Medical', 'Politics', 'Space', 'Sport', 'Technologie']
-    # top_classes = [class_labels[i] for i, p in enumerate(probabilities[0]) if p > threshold]
-    filtered_keys = [key for key, value in probabilities.items() if value > threshold]
-    return filtered_keys
+    threshold = 0.15
+    class_labels = df['Class'].unique()
+    top_classes = [class_labels[i] for i, p in enumerate(probabilities[0]) if p > threshold]
+    return top_classes
 
-# Get the input document path
-input_file_directory = r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\dataset\Food\food_1.txt"
-input_file_name = input_file_directory.split("\\")[-1]
-document_text = read_document(input_file_directory, input_file_name)
-
-# Load the fitted vectorizer from the pickle file
-vectorizer_path = r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\Logistic Regression Model\TFIDFvectorizer.pkl"
-with open(vectorizer_path, "rb") as f:
-    vectorizer = joblib.load(f)
-    
-# Transform the document text using the loaded vectorizer
-features = vectorizer.transform([document_text])
-
-# # Load the ONNX model
-model_path = r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\Logistic Regression Model\DocClassificationLrModel.onnx"
-ort_session = ort.InferenceSession(model_path)
-
-# Get the input names from the model
-input_name = ort_session.get_inputs()[0].name
-
-# Perform prediction using the model and features
-prediction = ort_session.run(None, {input_name: features.toarray().astype('float32')})
-predicted_class = prediction[0][0]
-predicted_classes = get_predicted_classes(prediction[1][0])
-predicted_probabilities = prediction[1][0]
+predicted_classes = get_predicted_classes(prediction_proba)
 
 print("=====================================================================")
-print("Predicted Class   :", predicted_class)
+print("Predicted Class   :", prediction[0])
 print("Predicted Classes :", predicted_classes, "\n")
 print("~~~~~~~~~~ Predicted Probability ~~~~~~~~~~")
-print("Business\t:", predicted_probabilities["Business"])
-print("Entertainment\t:", predicted_probabilities["Entertainment"])
-print("Food\t\t:", predicted_probabilities["Food"])
-print("Graphics\t:", predicted_probabilities["Graphics"])
-print("Historical\t:", predicted_probabilities["Historical"])
-print("Medical\t\t:", predicted_probabilities["Medical"])
-print("Politics\t:", predicted_probabilities["Politics"])
-print("Space\t\t:", predicted_probabilities["Space"])
-print("Sport\t\t:", predicted_probabilities["Sport"])
-print("Technologie\t:", predicted_probabilities["Technologie"])
+print("Predicted probability:")
+print("Academic\t:", prediction_proba[0][0])
+print("Administrative\t:", prediction_proba[0][1])
+print("Co-curricular\t:", prediction_proba[0][2])
+print("Financial\t:", prediction_proba[0][3])
+print("Personnel\t:", prediction_proba[0][4])
+print("Technical\t:", prediction_proba[0][5])
+# print("Politics\t:", prediction_proba[0][6])
+# print("Space\t\t:", prediction_proba[0][7])
+# print("Sport\t\t:", prediction_proba[0][8])
+# print("Technologie\t:", prediction_proba[0][9])
 print("=====================================================================\n")
+
+
+# In[20]:
+
+
+# import joblib
+# joblib.dump(model, 'DocClassificationLrModel.pkl')
+
+
+# In[21]:
+
+
+from skl2onnx.common.data_types import FloatTensorType
+from skl2onnx import convert_sklearn
+
+# Convert the model to ONNX
+# initial_type = [('features', onnx.TensorProto.FLOAT)] # Use onnx.TensorProto.FLOAT32
+initial_type = [('features', FloatTensorType([None, None]))]
+onx = convert_sklearn(trainedModel, initial_types=initial_type)
+
+# Save the converted model
+with open("DocClassificationLrModel.onnx", "wb") as f:
+    f.write(onx.SerializeToString())
+
+print("Pipeline conversion complete!")
+
+# pklmodel = joblib.load(r"D:\Documents\USM\USM_NotesExercises\Year 4 Sem 1\CAT405\Logistic Regression Model\DocClassificationLrModel.pkl")
+# onnx.save_model(pklmodel, "DocClassificationLrModel.onnx")
+

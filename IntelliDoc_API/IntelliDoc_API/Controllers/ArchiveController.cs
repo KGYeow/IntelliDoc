@@ -167,6 +167,10 @@ namespace IntelliDoc_API.Controllers
             var isDocVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).Any();
             if (!isDocVersionExist)
             {
+                var existingDocInActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
+                context.DocumentUserActions.RemoveRange(existingDocInActions);
+                context.SaveChanges();
+
                 existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
                 context.Documents.Remove(existingDoc);
                 context.SaveChanges();
@@ -178,7 +182,7 @@ namespace IntelliDoc_API.Controllers
         // Delete all the archived document and its archived version permanently from the archive list.
         [HttpDelete]
         [Route("Delete/All")]
-        public IActionResult DeleteAllPermanently()
+        public IActionResult EmptyArchive()
         {
             // var user = userService.GetUser(User);
             var archivedVersionHistories = context.DocumentVersionHistories.Where(d => d.IsArchived == true).ToList();
@@ -192,7 +196,11 @@ namespace IntelliDoc_API.Controllers
                 var isDocVersionExist = context.DocumentVersionHistories.Where(d => d.DocumentId == docId).Any();
 
                 if (!isDocVersionExist)
+                {
+                    var existingDocInActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
+                    context.DocumentUserActions.RemoveRange(existingDocInActions);
                     context.Documents.Remove(existingDoc);
+                }
                 else
                 {
                     existingDoc.HaveArchivedDocVersion = false;

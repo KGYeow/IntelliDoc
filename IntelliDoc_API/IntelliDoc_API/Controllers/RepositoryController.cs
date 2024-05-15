@@ -228,6 +228,10 @@ namespace IntelliDoc_API.Controllers
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
             existingDoc.HaveArchivedDocVersion = true;
 
+/*            var existingDocUserActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
+            existingDocUserActions.ForEach(doc => { doc.IsFlagged = false; });
+            context.DocumentUserActions.UpdateRange(existingDocUserActions);*/
+
             if (version == 0) // All versions.
             {
                 existingDoc.IsAllVersionsArchived = true;
