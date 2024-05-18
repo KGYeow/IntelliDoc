@@ -12,9 +12,11 @@ namespace IntelliDoc_API.Controllers
     public class RepositoryController : BaseController
     {
         protected readonly ModelService modelService;
+        protected readonly RegExService regExService;
 
-        public RepositoryController(IConfiguration configuration, UserService userService, ModelService modelService, IntelliDocDBContext context) : base(configuration, userService, context)
+        public RepositoryController(IConfiguration configuration, UserService userService, ModelService modelService, RegExService regExService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
+            this.regExService = regExService;
             this.modelService = modelService;
         }
 
@@ -156,6 +158,15 @@ namespace IntelliDoc_API.Controllers
             return Ok(new Response { Status = "Success", Message = "New document created successfully" });
         }
 
+        // Find the matched patterns in the document for adding related documents.
+        [HttpGet]
+        [Route("FindPatterns/{DocName}")]
+        public IActionResult FindPatterns(string docName, [FromBody] RepositoryUpdate dto)
+        {
+            var matchedPatternList = regExService.FindPattern(dto.Attachment, docName);
+            return Ok(matchedPatternList);
+        }
+
         // Edit and update the existing document.
         [HttpPut]
         [Route("{DocId}")]
@@ -193,30 +204,38 @@ namespace IntelliDoc_API.Controllers
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            var existingDocName = context.Documents.Where(d => d.Name == name && d.Id != docId).Any();
 
             if (existingDoc.Name == name)
                 throw new Exception("The new document name is the same as the old");
-            else
-            {
-                existingDoc.Name = name;
-                context.Documents.Update(existingDoc);
-                context.SaveChanges();
+            if (existingDocName)
+                throw new Exception("The document name already exists");
 
-                return Ok(new Response { Status = "Success", Message = "Existing document renamed successfully" });
-            }
+            existingDoc.Name = name;
+            context.Documents.Update(existingDoc);
+            context.SaveChanges();
+
+            return Ok(new Response { Status = "Success", Message = "Existing document renamed successfully" });
         }
 
         // Edit the description of existing document.
         [HttpPut]
-        [Route("Description/{DocId}")]
-        public IActionResult EditDescription(int docId, [FromBody] RepositoryDescription dto)
+        [Route("Edit/{DocId}")]
+        public IActionResult Edit(int docId, [FromBody] RepositoryEdit dto)
         {
             var user = userService.GetUser(User);
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+            var existingDocName = context.Documents.Where(d => d.Name == dto.Name && d.Id != docId).Any();
+            
+            if (existingDocName)
+                throw new Exception("The document name already exists");
+
+            existingDoc.Name = dto.Name;
+            existingDoc.Category = dto.Category;
             existingDoc.Description = dto.Description;
             context.Documents.Update(existingDoc);
             context.SaveChanges();
-            return Ok(new Response { Status = "Success", Message = "Description edited successfully" });
+            return Ok(new Response { Status = "Success", Message = "The document edited successfully" });
         }
 
         // Archive the existing document or its specific version.
@@ -228,12 +247,12 @@ namespace IntelliDoc_API.Controllers
             var existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
             existingDoc.HaveArchivedDocVersion = true;
 
-/*            var existingDocUserActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
-            existingDocUserActions.ForEach(doc => { doc.IsFlagged = false; });
-            context.DocumentUserActions.UpdateRange(existingDocUserActions);*/
-
             if (version == 0) // All versions.
             {
+                var existingDocUserActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
+                existingDocUserActions.ForEach(doc => { doc.IsFlagged = false; });
+                context.DocumentUserActions.UpdateRange(existingDocUserActions);
+
                 existingDoc.IsAllVersionsArchived = true;
                 context.Documents.Update(existingDoc);
                 context.SaveChanges();

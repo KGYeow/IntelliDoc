@@ -1,6 +1,7 @@
 using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -11,6 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
 IWebHostEnvironment environment = builder.Environment;
 
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = int.MaxValue;
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<IntelliDocDBContext>(options =>
 {
@@ -29,8 +34,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     }
 );
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ModelService>();
+builder.Services.AddScoped<RegExService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;

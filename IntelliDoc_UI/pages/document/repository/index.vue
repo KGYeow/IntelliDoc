@@ -59,16 +59,11 @@
         <v-divider/>
         <v-row>
           <v-col>
-            <!-- Add New Document -->
-            <v-file-input
-              class="d-none"
-              ref="addDocInput"
-              v-model:model-value="addDocInfo.attachmentInfo"
-              @update:model-value="addDoc"
-              :accept="`application/pdf, .doc,.docx,.xml, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document`"
-              hide-details
-            />
-            <v-btn class="float-end" color="primary" prepend-icon="mdi-file-document-plus-outline" flat @click="addDocInput.click()">New Document</v-btn>
+            <!-- Add New Document Button -->
+            <v-btn class="float-end" color="primary" :prepend-icon="loading.addDoc ? null : 'mdi-file-document-plus-outline'" flat @click="createDocModal = true" :disabled="loading.addDoc">
+              <v-progress-circular class="me-2" color="white" :size="18" :width="3" indeterminate v-if="loading.addDoc"/>
+              {{ loading.addDoc ? 'Adding new document' : 'New Document' }}
+            </v-btn>
           </v-col>
         </v-row>
 
@@ -178,6 +173,7 @@
                         <v-list class="text-body-1" density="compact" elevation="4">
                           <v-list-item prepend-icon="mdi-download-outline" @click="downloadDoc(item)">Download</v-list-item>
                           <v-list-item prepend-icon="mdi-upload-outline" @click="selectDoc('Update', item)">Update</v-list-item>
+                          <v-list-item prepend-icon="mdi-pencil-outline" @click="selectDoc('Edit', item)">Edit</v-list-item>
                           <v-list-item prepend-icon="mdi-rename-outline" @click="selectDoc('Rename', item)">Rename</v-list-item>
                           <v-list-item
                             :prepend-icon="item.isFlagged ? 'mdi-flag-variant' : 'mdi-flag-variant-outline'"
@@ -218,21 +214,35 @@
     </v-col>
   </v-row>
 
+  <!-- Create Document Modal -->
+  <SharedUiModal v-model="createDocModal" title="Create Document">
+    <DocumentRepositoryCreateForm @close-modal="createDocModal = $event"/>
+  </SharedUiModal>
+
   <!-- Rename Document Modal -->
   <SharedUiModal v-model="renameDocModal" title="Rename Document" width="500">
     <DocumentRepositoryRenameForm
       :doc-id="selectedDocInfo.id"
       :doc-name-old="selectedDocInfo.name"
-      @close-modal="(e) => renameDocModal = e"
+      @close-modal="renameDocModal = $event"
+    />
+  </SharedUiModal>
+
+  <!-- Edit Document Modal -->
+  <SharedUiModal v-model="editDocModal" title="Edit Document">
+    <DocumentRepositoryEditForm
+      :doc="selectedDocInfo"
+      :doc-category-list="filterOption.docCategoryList"
+      @close-modal="editDocModal = $event"
     />
   </SharedUiModal>
 
   <!-- Update Document Modal -->
-  <SharedUiModal v-model="editAttachmentModal" title="Update Document" width="500">
+  <SharedUiModal v-model="updateAttachmentModal" title="Update Document" width="500">
     <DocumentRepositoryUpdateForm
       :doc-id="selectedDocInfo.id"
       :doc-name="selectedDocInfo.name"
-      @close-modal="(e) => editAttachmentModal = e"
+      @close-modal="updateAttachmentModal = $event"
     />
   </SharedUiModal>
 
@@ -242,7 +252,7 @@
       :doc-id="selectedDocInfo.id"
       :doc-name="selectedDocInfo.name"
       :doc-type="selectedDocInfo.type"
-      @close-modal="(e) => versionHistoryModal = e"
+      @close-modal="versionHistoryModal = $event"
     />
   </SharedUiModal>
 </template>
@@ -266,14 +276,18 @@ const addDocInfo = ref({
   attachment: null,
   attachmentInfo: null,
 })
-const selectedDocInfo = ref({
-  id: null,
-  name: null,
-  type: null,
+const selectedDocInfo = ref({})
+const loading = ref({
+  addDoc: false,
+  updateDoc: false,
+  downloadDoc: false,
+  flagDoc: false,
+  archiveDoc: false,
 })
-const addDocInput = ref(null)
+const createDocModal = ref(false)
 const renameDocModal = ref(false)
-const editAttachmentModal = ref(false)
+const editDocModal = ref(false)
+const updateAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
 const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
@@ -309,89 +323,22 @@ definePageMeta({
 })
 
 // Methods
-function getFileExtension (docName) {
-  const extensionIndex = docName.lastIndexOf(".")
-  return docName.slice(extensionIndex + 1) // Get the extension
-}
 const pageCount = () => {
   return Math.ceil(docList.value.length / itemsPerPage.value)
 }
-const getFileType = (docName) => {
-  const extensions = {
-    "pdf": "PDF",
-    "doc": "Word",
-    "docx": "Word",
-    "xls": "Excel",
-    "xlsx": "Excel",
-  }
-  const ext = getFileExtension(docName)
-  return extensions[ext] || null // Check for extension in map, return null if not found
-}
-const addDoc = async() => {
-  const file = addDocInfo.value.attachmentInfo[0]
-  if (file)
-  {
-    const reader = new FileReader() // Read file as DataURL using a promise-based approach
-    reader.readAsDataURL(file)
-
-    try {
-      const base64Data = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result)
-        reader.onerror = reject
-      })
-
-      addDocInfo.value.attachment = base64Data.replace(/^.+?;base64,/, '')
-      addDocInfo.value.name = file.name
-      addDocInfo.value.type = getFileType(file.name)
-
-      const fileSize = (addDocInfo.value.attachment.length * 3) / 4 / 1024 // Convert base64 size to KB
-      if (fileSize > 28000)
-        return ElNotification.warning({ message: "Document size cannot exceeds 28MB" })
-
-      if (getFileType(addDocInfo.value.name) == null)
-        return ElNotification.warning({ message: "The document type must be in PDF or Word" })
-
-      try {
-        const result = await useFetchCustom.$post("/Repository", {
-          name: addDocInfo.value.name,
-          attachment: addDocInfo.value.attachment,
-          type: addDocInfo.value.type,
-        })
-
-        if (!result.error) {
-          addDocInfo.value.name = null
-          addDocInfo.value.type = null
-          addDocInfo.value.attachment = null
-          addDocInfo.value.attachmentInfo = null
-          ElNotification.success({ message: result.message })
-          refreshNuxtData()
-        }
-        else {
-          ElNotification.error({ message: result.message })
-        }
-      } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
-
-    } catch(e) { ElNotification.error({ message: `Error reading file: ${e}` }) }
-  }
-  else {
-    addDocInfo.value.name = null
-    addDocInfo.value.type = null
-    addDocInfo.value.attachment = null
-    addDocInfo.value.attachmentInfo = null
-  }
-}
 const selectDoc = (action, doc) => {
-  selectedDocInfo.value.id = doc.id
-  selectedDocInfo.value.name = doc.name
+  selectedDocInfo.value = doc
 
   if (action == "Rename") {
     renameDocModal.value = true
   }
+  else if (action == "Edit") {
+    editDocModal.value = true
+  }
   else if (action == "Update") {
-    editAttachmentModal.value = true
+    updateAttachmentModal.value = true
   }
   else if (action = "VersionHistory") {
-    selectedDocInfo.value.type = doc.type
     versionHistoryModal.value = true
   }
   else {
@@ -399,6 +346,7 @@ const selectDoc = (action, doc) => {
   }
 }
 const downloadDoc = async(doc) => {
+  loading.value.downloadDoc = true
   const attachment = await useFetchCustom.$fetch(`/Repository/GetAttachment/${doc.id}/0`)
   const mimeType = {
     "PDF": "application/pdf",
@@ -408,7 +356,8 @@ const downloadDoc = async(doc) => {
   const arrayBuffer = Buffer.from(attachment, 'base64');
   const blob = new Blob([arrayBuffer], { type: mimeType[doc.type] })
   const url = URL.createObjectURL(blob)
-  
+
+  loading.value.downloadDoc = false
   if (doc.type == 'PDF')
     window.open(url, '_blank')
   else {

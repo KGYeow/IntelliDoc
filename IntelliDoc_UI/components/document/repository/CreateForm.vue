@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="updateDoc">
+  <form @submit.prevent="createDoc">
     <v-card-text class="px-8 py-4">
       <div class="text-body-1">
         <v-row>
@@ -11,8 +11,8 @@
               prepend-icon=""
               clear-icon="mdi-close-circle-outline fs-5"
               :accept="acceptedDocInput"
-              :error-messages="editAttachmentDetails.attachment.errorMessage"
-              v-model:model-value="editAttachmentDetails.attachmentInfo"
+              :error-messages="addDocInfo.attachment.errorMessage"
+              v-model:model-value="addDocInfo.attachmentInfo"
               @update:model-value="uploadFile"
               messages="Document files with a size less than 1GB"
               hide-details="auto"
@@ -25,7 +25,7 @@
     <v-card-actions class="p-3 justify-content-end">
       <v-btn color="primary" type="submit" :disabled="loading">
         <v-progress-circular class="me-2" color="primary" :size="18" :width="3" indeterminate v-if="loading"/>
-        {{ loading ? 'Updating' : 'Update' }}
+        {{ loading ? 'Creating' : 'Create' }}
       </v-btn>
     </v-card-actions>
   </form>
@@ -35,14 +35,9 @@
 import { useField, useForm } from 'vee-validate'
 
 // Properties, Emit & Model
-const props = defineProps({
-  docId: Number,
-  docName: String,
-})
 const emit = defineEmits(['close-modal'])
 
 // Data
-const currentFileExtension = getFileExtension(props.docName)
 const { handleSubmit } = useForm({
   validationSchema: {
     attachment(value) {
@@ -53,67 +48,94 @@ const { handleSubmit } = useForm({
       if (fileSize > 1024)
         return 'Document size cannot exceeds 1GB'
 
-      const fileExtension = getFileExtension(editAttachmentDetails.value.attachmentInfo.name)
-      return fileExtension == currentFileExtension  ? true : `The updated document is ${currentFileExtension} file format`
+      if (getFileType(addDocInfo.value.name) == null)
+        return 'The document type must be in PDF or Word'
+
+      return true
     }
   }
 })
 const loading = ref(false)
-const editAttachmentDetails = ref({
-  attachmentInfo: null,
+const addDocInfo = ref({
+  name: null,
+  type: null,
   attachment: useField('attachment'),
-  extension: null,
+  attachmentInfo: null,
 })
-const acceptedDocInput = ref(
-  `application/pdf,
+const acceptedDocInput = ref(`
+  application/pdf,
   .doc,.docx,.xml,
   application/msword,
   application/vnd.openxmlformats-officedocument.wordprocessingml.document,
 `)
 
 // Methods
-function getFileExtension (docName) {
+const getFileExtension = (docName) => {
   const extensionIndex = docName.lastIndexOf(".")
   return docName.slice(extensionIndex + 1) // Get the extension
 }
+const getFileType = (docName) => {
+  const extensions = {
+    "pdf": "PDF",
+    "doc": "Word",
+    "docx": "Word",
+    "xls": "Excel",
+    "xlsx": "Excel",
+  }
+  const ext = getFileExtension(docName)
+  return extensions[ext] || null // Check for extension in map, return null if not found
+}
 const uploadFile = async() => {
-  const file = editAttachmentDetails.value.attachmentInfo
-  if (file) {
-    // Read file as DataURL using a promise-based approach
-    const reader = new FileReader()
+  const file = addDocInfo.value.attachmentInfo
+  if (file)
+  {
+    const reader = new FileReader() // Read file as DataURL using a promise-based approach
     reader.readAsDataURL(file)
+
     try {
       const base64Data = await new Promise((resolve, reject) => {
         reader.onload = () => resolve(reader.result)
         reader.onerror = reject
       })
-      editAttachmentDetails.value.attachment.value = base64Data.replace(/^.+?;base64,/, '')
-      editAttachmentDetails.value.extension = getFileExtension(file.name)
-    } catch(e) { ElNotification.error({ message: `Error reading file: ${e}` }) }
+
+      addDocInfo.value.attachment.value = base64Data.replace(/^.+?;base64,/, '')
+      addDocInfo.value.name = file.name
+      addDocInfo.value.type = getFileType(file.name)
+
+      // if (getFileType(addDocInfo.value.name) == null) {
+      //   return ElNotification.warning({ message: "The document type must be in PDF or Word" })
+      // }
+    }
+    catch(e) {
+      ElNotification.error({ message: `Error reading file: ${e}` })
+    }
   }
-  else
-  {
-    editAttachmentDetails.value.extension = null
-    editAttachmentDetails.value.attachment.value = null
+  else {
+    addDocInfo.value.name = null
+    addDocInfo.value.type = null
+    addDocInfo.value.attachment.resetField()
+    addDocInfo.value.attachmentInfo = null
   }
 }
-const updateDoc = handleSubmit(async(values) => {
+const createDoc = handleSubmit(async(values) => {
   loading.value = true
   try {
-    const result = await useFetchCustom.$put(`/Repository/${props.docId}`, {
+    const result = await useFetchCustom.$post("/Repository", {
+      name: addDocInfo.value.name,
       attachment: values.attachment,
+      type: addDocInfo.value.type,
     })
-    
+
     if (!result.error) {
-      emit('close-modal', false)
-      editAttachmentDetails.value.attachment.resetField()
-      editAttachmentDetails.value.attachmentInfo = null
-      editAttachmentDetails.value.extension = null
-      
+      addDocInfo.value.name = null
+      addDocInfo.value.type = null
+      addDocInfo.value.attachment.resetField()
+      addDocInfo.value.attachmentInfo = null
       ElNotification.success({ message: result.message })
       refreshNuxtData()
     }
     else {
+      console.log(result.message);
       ElNotification.error({ message: result.message })
     }
   }
