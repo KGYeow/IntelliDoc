@@ -22,6 +22,28 @@
   }
 }
 
+.relatedDocInputs {
+  .v-input {
+    font-size: 0.75rem;
+    --v-input-control-height: 10px;
+    --v-input-padding-top: -4px;
+    
+    .v-field {      
+      .v-field__clearable {
+        i {
+          font-size: 0.875rem !important;
+        }
+      }
+
+      .v-field__input {
+        font-size: 0.75rem;
+        padding-top: 6px;
+        padding-bottom: 4px;
+      }
+    }
+  }
+}
+
 // v-calendar
 .vc-container {
   font-family: "Plus Jakarta Sans", sans-serif !important;

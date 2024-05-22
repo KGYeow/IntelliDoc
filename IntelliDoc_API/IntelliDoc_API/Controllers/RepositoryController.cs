@@ -38,7 +38,7 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetFilteredRepository([FromQuery] RepositoryFilter dto)
         {
             var user = userService.GetUser(User);
-            var l = from doc in context.Documents.Include(a => a.ModifiedBy).Where(a => a.IsAllVersionsArchived == false)
+            var l = from doc in context.Documents.Include(a => a.ModifiedBy).Where(a => a.IsAllVersionsArchived == false && a.IsRelatedDoc == false)
                     join act in context.DocumentUserActions.Where(a => a.UserId == user.Id)
                     on doc.Id equals act.DocumentId into grouping
                     from act in grouping.DefaultIfEmpty()
@@ -137,8 +137,9 @@ namespace IntelliDoc_API.Controllers
                 ModifiedById = user.Id,
                 ModifiedDate = DateTime.Now,
                 Type = dto.Type,
-                HaveArchivedDocVersion = false, 
-                IsAllVersionsArchived = false
+                HaveArchivedDocVersion = false,
+                IsAllVersionsArchived = false,
+                IsRelatedDoc = false
             };
             context.Documents.Add(document);
             context.SaveChanges();
@@ -155,15 +156,57 @@ namespace IntelliDoc_API.Controllers
             context.DocumentVersionHistories.Add(versionHistory);
             context.SaveChanges();
 
+            if (dto.RelatedDoc.Count != 0)
+            {
+                dto.RelatedDoc.ForEach(doc =>
+                {
+                    var relatedDocument = new Document
+                    {
+                        Name = doc.Name,
+                        Category = "Others",
+                        CurrentVersion = 1,
+                        CreatedById = user.Id,
+                        CreatedDate = DateTime.Now,
+                        ModifiedById = user.Id,
+                        ModifiedDate = DateTime.Now,
+                        Type = doc.Type,
+                        HaveArchivedDocVersion = false,
+                        IsAllVersionsArchived = false,
+                        IsRelatedDoc = true
+                    };
+                    context.Documents.Add(relatedDocument);
+                    context.SaveChanges();
+
+                    context.DocumentRelationships.Add(new DocumentRelationship
+                    {
+                        DocumentMainId = document.Id,
+                        DocumentRelatedId = relatedDocument.Id,
+                    });
+                    context.SaveChanges();
+
+                    var versionHistory = new DocumentVersionHistory
+                    {
+                        DocumentId = relatedDocument.Id,
+                        Version = 1,
+                        ModifiedById = user.Id,
+                        ModifiedDate = DateTime.Now,
+                        Attachment = dto.Attachment,
+                        IsArchived = false
+                    };
+                    context.DocumentVersionHistories.Add(versionHistory);
+                    context.SaveChanges();
+                });
+            }
+
             return Ok(new Response { Status = "Success", Message = "New document created successfully" });
         }
 
         // Find the matched patterns in the document for adding related documents.
-        [HttpGet]
-        [Route("FindPatterns/{DocName}")]
-        public IActionResult FindPatterns(string docName, [FromBody] RepositoryUpdate dto)
+        [HttpPut]
+        [Route("FindPatterns")]
+        public IActionResult FindPatterns([FromBody] RepositoryFindPatterns dto)
         {
-            var matchedPatternList = regExService.FindPattern(dto.Attachment, docName);
+            var matchedPatternList = regExService.FindPattern(dto.Attachment, dto.Name);
             return Ok(matchedPatternList);
         }
 

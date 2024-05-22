@@ -17,6 +17,7 @@ namespace IntelliDoc_API.Models
         }
 
         public virtual DbSet<Document> Documents { get; set; } = null!;
+        public virtual DbSet<DocumentRelationship> DocumentRelationships { get; set; } = null!;
         public virtual DbSet<DocumentUserAction> DocumentUserActions { get; set; } = null!;
         public virtual DbSet<DocumentVersionHistory> DocumentVersionHistories { get; set; } = null!;
         public virtual DbSet<Notification> Notifications { get; set; } = null!;
@@ -69,6 +70,29 @@ namespace IntelliDoc_API.Models
                     .WithMany(p => p.DocumentModifiedBies)
                     .HasForeignKey(d => d.ModifiedById)
                     .HasConstraintName("FK_Document_ModifiedByUser");
+            });
+
+            modelBuilder.Entity<DocumentRelationship>(entity =>
+            {
+                entity.ToTable("DocumentRelationship");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.DocumentMainId).HasColumnName("DocumentMainID");
+
+                entity.Property(e => e.DocumentRelatedId).HasColumnName("DocumentRelatedID");
+
+                entity.HasOne(d => d.DocumentMain)
+                    .WithMany(p => p.DocumentRelationshipDocumentMains)
+                    .HasForeignKey(d => d.DocumentMainId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentRelationship_DocumentMain");
+
+                entity.HasOne(d => d.DocumentRelated)
+                    .WithMany(p => p.DocumentRelationshipDocumentRelateds)
+                    .HasForeignKey(d => d.DocumentRelatedId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DocumentRelationship_DocumentRelated");
             });
 
             modelBuilder.Entity<DocumentUserAction>(entity =>

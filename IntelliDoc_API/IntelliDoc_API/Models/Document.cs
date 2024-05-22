@@ -7,6 +7,8 @@ namespace IntelliDoc_API.Models
     {
         public Document()
         {
+            DocumentRelationshipDocumentMains = new HashSet<DocumentRelationship>();
+            DocumentRelationshipDocumentRelateds = new HashSet<DocumentRelationship>();
             DocumentUserActions = new HashSet<DocumentUserAction>();
             DocumentVersionHistories = new HashSet<DocumentVersionHistory>();
         }
@@ -23,9 +25,12 @@ namespace IntelliDoc_API.Models
         public string Type { get; set; } = null!;
         public bool HaveArchivedDocVersion { get; set; }
         public bool IsAllVersionsArchived { get; set; }
+        public bool IsRelatedDoc { get; set; }
 
         public virtual User? CreatedBy { get; set; }
         public virtual User? ModifiedBy { get; set; }
+        public virtual ICollection<DocumentRelationship> DocumentRelationshipDocumentMains { get; set; }
+        public virtual ICollection<DocumentRelationship> DocumentRelationshipDocumentRelateds { get; set; }
         public virtual ICollection<DocumentUserAction> DocumentUserActions { get; set; }
         public virtual ICollection<DocumentVersionHistory> DocumentVersionHistories { get; set; }
     }

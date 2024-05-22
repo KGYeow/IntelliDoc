@@ -169,9 +169,14 @@ namespace IntelliDoc_API.Controllers
             {
                 var existingDocInActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
                 context.DocumentUserActions.RemoveRange(existingDocInActions);
-                context.SaveChanges();
 
-                existingDoc = context.Documents.Where(d => d.Id == docId).FirstOrDefault();
+                var existingDocRelationships = context.DocumentRelationships.ToList();
+                if (existingDoc.IsRelatedDoc)
+                    existingDocRelationships = existingDocRelationships.Where(d => d.DocumentRelatedId == docId).ToList();
+                else
+                    existingDocRelationships = existingDocRelationships.Where(d => d.DocumentMainId == docId).ToList();
+                context.DocumentRelationships.RemoveRange(existingDocRelationships);
+
                 context.Documents.Remove(existingDoc);
                 context.SaveChanges();
             }
@@ -200,6 +205,13 @@ namespace IntelliDoc_API.Controllers
                     var existingDocInActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
                     context.DocumentUserActions.RemoveRange(existingDocInActions);
                     context.Documents.Remove(existingDoc);
+
+                    var existingDocRelationships = context.DocumentRelationships.ToList();
+                    if (existingDoc.IsRelatedDoc)
+                        existingDocRelationships = existingDocRelationships.Where(d => d.DocumentRelatedId == docId).ToList();
+                    else
+                        existingDocRelationships = existingDocRelationships.Where(d => d.DocumentMainId == docId).ToList();
+                    context.DocumentRelationships.RemoveRange(existingDocRelationships);
                 }
                 else
                 {

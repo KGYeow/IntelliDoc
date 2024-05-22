@@ -16,7 +16,6 @@
               @update:model-value="uploadFile"
               messages="Document files with a size less than 1GB"
               hide-details="auto"
-              show-size
             />
           </v-col>
         </v-row>

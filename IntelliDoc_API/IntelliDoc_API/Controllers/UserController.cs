@@ -4,6 +4,8 @@ using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -11,8 +13,22 @@ namespace IntelliDoc_API.Controllers
     [ApiController]
     public class UserController : BaseController
     {
-        public UserController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
+        protected readonly IntelliDocDBSettings mongoDB;
+
+        public UserController(IConfiguration configuration, UserService userService, IntelliDocDBContext context, IntelliDocDBSettings mongoDB) : base(configuration, userService, context)
         {
+            this.mongoDB = mongoDB;
+        }
+
+        // TESTING.
+        [HttpGet]
+        [Route("TestingMongo")]
+        public IActionResult TestingMongo()
+        {
+            var filter = Builders<BsonDocument>.Filter.Eq("fullName", "Yeow Kok Guan");
+            var user = mongoDB.Users.Find(filter).First();
+            // var user = context.Users.ToList().Select(x => new { id = x.Id, fullName = x.FullName });
+            return Ok(user);
         }
 
         // Get the options for filters.

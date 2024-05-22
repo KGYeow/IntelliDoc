@@ -41,7 +41,7 @@ namespace IntelliDoc_API.Controllers
             var user = userService.GetUser(User);
             var l = context.DocumentUserActions
                 .Include(a => a.Document).Include(a => a.Document.ModifiedBy)
-                .Where(a => a.UserId == user.Id && a.IsFlagged == true)
+                .Where(a => a.UserId == user.Id && a.IsFlagged == true && a.Document.IsRelatedDoc == false)
                 .Select(x => new
                 {
                     id = x.DocumentId,

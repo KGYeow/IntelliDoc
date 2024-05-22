@@ -215,7 +215,7 @@
   </v-row>
 
   <!-- Create Document Modal -->
-  <SharedUiModal v-model="createDocModal" title="Create Document">
+  <SharedUiModal v-model="createDocModal" title="Create Document" width="700">
     <DocumentRepositoryCreateForm @close-modal="createDocModal = $event"/>
   </SharedUiModal>
 
@@ -269,12 +269,6 @@ const filter = ref({
   docId: null,
   category: null,
   type: null,
-})
-const addDocInfo = ref({
-  name: null,
-  type: null,
-  attachment: null,
-  attachmentInfo: null,
 })
 const selectedDocInfo = ref({})
 const loading = ref({

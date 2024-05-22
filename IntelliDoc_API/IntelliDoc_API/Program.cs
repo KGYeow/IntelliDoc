@@ -5,12 +5,21 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using MongoDB.Driver;
+using MongoDB.Bson;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 ConfigurationManager configuration = builder.Configuration;
 IWebHostEnvironment environment = builder.Environment;
+
+/*var client = new MongoClient(configuration.GetConnectionString("ConnUri"));
+var collection = client.GetDatabase("IntelliDocDB").GetCollection<BsonDocument>("Users");
+var filter = Builders<BsonDocument>.Filter.Eq("fullName", "Yeow Kok Guan");
+var document = collection.Find(filter).First();
+Console.WriteLine(document);*/
 
 builder.Services.Configure<KestrelServerOptions>(options =>
 {
@@ -20,6 +29,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<IntelliDocDBContext>(options =>
 {
     options.UseSqlServer(configuration.GetConnectionString("ConnStr"));
+});
+builder.Services.Configure<IntelliDocDBSettings>(options =>
+{
+    options.ConnectionString = configuration.GetConnectionString("ConnUri");
+    options.DatabaseName = "IntelliDocDB";
 });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
     options.TokenValidationParameters = new TokenValidationParameters
