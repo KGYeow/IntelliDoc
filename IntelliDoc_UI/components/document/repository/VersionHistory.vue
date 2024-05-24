@@ -1,5 +1,5 @@
 <template>
-  <v-card-text class="px-8 py-4">
+  <v-card-text class="px-8 pt-4 pb-0">
     <div class="text-body-1 overflow-hidden">
       <v-data-table
         density="compact"
@@ -90,7 +90,7 @@ const emit = defineEmits(['close-modal'])
 
 // Data
 const currentPage = ref(1)
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(5)
 const { data: docVersionHistory } = await useFetchCustom.$get(`/Repository/VersionHistory/${props.docId}`)
 
 // Methods

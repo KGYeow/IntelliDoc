@@ -67,6 +67,42 @@ namespace IntelliDoc_API.Controllers
             return Ok(l);
         }
 
+        // Get the list of related documents of a repository document.
+        [HttpGet]
+        [Route("RelatedDocs/{DocId}")]
+        public IActionResult GetRelatedDocuments(int docId)
+        {
+            var l = context.DocumentRelationships.Include(a => a.DocumentRelated)
+                .Where(a => a.DocumentMainId == docId && a.DocumentRelated.IsAllVersionsArchived == false)
+                .Select(x => new
+                {
+                    id = x.DocumentRelatedId,
+                    name = x.DocumentRelated.Name,
+                    description = x.DocumentRelated.Description,
+                    currentVersion = x.DocumentRelated.CurrentVersion,
+                    modifiedById = x.DocumentRelated.ModifiedById,
+                    modifiedBy = x.DocumentRelated.ModifiedBy.FullName,
+                    modifiedDate = x.DocumentRelated.ModifiedDate,
+                    type = x.DocumentRelated.Type,
+                }).ToList();
+/*            var l = from doc in context.Documents.Include(a => a.ModifiedBy).Where(a => a.Id == docId)
+                    join relation in context.DocumentRelationships.Where(a => a.DocumentMainId == docId)
+                    on doc.Id equals relation.DocumentMainId into grouping
+                    from relation in grouping.DefaultIfEmpty()
+                    select new
+                    {
+                        id = doc.Id,
+                        name = doc.Name,
+                        description = doc.Description,
+                        currentVersion = doc.CurrentVersion,
+                        modifiedById = doc.ModifiedById,
+                        modifiedBy = doc.ModifiedBy.FullName,
+                        modifiedDate = doc.ModifiedDate,
+                        type = doc.Type,
+                    };*/
+            return Ok(l);
+        }
+
         // Get the list of version history of a repository document.
         [HttpGet]
         [Route("VersionHistory/{DocId}")]
@@ -181,7 +217,7 @@ namespace IntelliDoc_API.Controllers
                     {
                         DocumentMainId = document.Id,
                         DocumentRelatedId = relatedDocument.Id,
-                    });
+                    });　
                     context.SaveChanges();
 
                     var versionHistory = new DocumentVersionHistory

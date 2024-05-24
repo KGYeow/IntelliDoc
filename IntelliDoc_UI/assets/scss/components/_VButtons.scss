@@ -49,6 +49,11 @@
   // border-radius: 10px;
   text-transform: capitalize;
   letter-spacing: $btn-letter-spacing;
+
+  .v-btn__prepend {
+    padding-inline: calc(var(--v-btn-height) / -9) calc(var(--v-btn-height) / 4.5);
+    margin-inline: unset;
+  }
 }
 .v-btn--icon.v-btn--density-default {
   border-radius: 50%;

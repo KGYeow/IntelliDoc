@@ -13,15 +13,15 @@ namespace IntelliDoc_API.Controllers
     [ApiController]
     public class UserController : BaseController
     {
-        protected readonly IntelliDocDBSettings mongoDB;
+        // protected readonly IntelliDocDBSettings mongoDB;
 
-        public UserController(IConfiguration configuration, UserService userService, IntelliDocDBContext context, IntelliDocDBSettings mongoDB) : base(configuration, userService, context)
+        public UserController(IConfiguration configuration, UserService userService, IntelliDocDBContext context) : base(configuration, userService, context)
         {
-            this.mongoDB = mongoDB;
+            // this.mongoDB = mongoDB;
         }
 
         // TESTING.
-        [HttpGet]
+/*        [HttpGet]
         [Route("TestingMongo")]
         public IActionResult TestingMongo()
         {
@@ -29,7 +29,7 @@ namespace IntelliDoc_API.Controllers
             var user = mongoDB.Users.Find(filter).First();
             // var user = context.Users.ToList().Select(x => new { id = x.Id, fullName = x.FullName });
             return Ok(user);
-        }
+        }*/
 
         // Get the options for filters.
         [HttpGet]

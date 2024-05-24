@@ -58,7 +58,7 @@
                           </v-col>
                         </v-row>
                         <v-row class="relatedDocInputs" v-for="(doc, index) in addRelatedDocInfo" :key="index">
-                          <v-col cols="3" class="text-caption pb-0">
+                          <v-col cols="3" class="d-flex text-caption pb-0">
                             <v-label class="text-caption" v-if="!doc.isAdding">{{ doc.name }}</v-label>
                             <v-text-field
                               variant="outlined"
@@ -80,7 +80,6 @@
                               prepend-icon=""
                               clear-icon="mdi-close-circle-outline fs-5"
                               :accept="acceptedDocInput"
-                              :error-messages="addRelatedDocInfo[index].attachment.errorMessage"
                               v-model:model-value="addRelatedDocInfo[index].attachmentInfo"
                               @update:model-value="uploadRelatedFile(index)"
                               hide-details
@@ -155,20 +154,6 @@ const { handleSubmit } = useForm({
       if (getFileType(addDocInfo.value.name) == null)
         return 'The document type must be in PDF or Word'
 
-      return true
-    },
-    relatedAttachment(value) {
-      // if (hasRelatedDoc.value) {
-      //   if (!value)
-      //     return 'Document is required'
-
-      //   const fileSize = (value.length * 3) / 4 / 1024 / 1024 // Convert base64 size to MB
-      //   if (fileSize > 1024)
-      //     return 'Document size cannot exceeds 1GB'
-
-      //   if (getFileType(addDocInfo.value.name) == null)
-      //     return 'The document type must be in PDF or Word'
-      // }
       return true
     }
   }
@@ -250,7 +235,9 @@ const uploadRelatedFile = async(i) => {
         reader.onerror = reject
       })
 
-      addRelatedDocInfo.value[i].attachment.value = base64Data.replace(/^.+?;base64,/, '')
+      const fileExt = getFileExtension(file.name)
+      addRelatedDocInfo.value[i].attachment = base64Data.replace(/^.+?;base64,/, '')
+      addRelatedDocInfo.value[i].nameWithExt = addRelatedDocInfo.value[i].name.concat(`.${fileExt}`)
       addRelatedDocInfo.value[i].type = getFileType(file.name)
     }
     catch(e) {
@@ -265,32 +252,43 @@ const uploadRelatedFile = async(i) => {
 }
 const createDoc = handleSubmit(async(values) => {
   loading.value.create = true
-  try {
-    const result = await useFetchCustom.$post("/Repository", {
-      name: addDocInfo.value.name,
-      attachment: values.attachment,
-      type: addDocInfo.value.type,
-      relatedDoc: addRelatedDocInfo.value.map(doc => ({
-        name: doc.name,
-        attachment: doc.attachment.value,
-        type: doc.type,
-      })),
-    })
+  const editIncomplete = addRelatedDocInfo.value.some(doc => doc.isAdding == true)
+  const inputIncomplete = addRelatedDocInfo.value.some(doc => doc.attachment == null)
 
-    if (!result.error) {
-      addDocInfo.value.name = null
-      addDocInfo.value.type = null
-      addDocInfo.value.attachment.resetField()
-      addDocInfo.value.attachmentInfo = null
-      ElNotification.success({ message: result.message })
-      refreshNuxtData()
-    }
-    else {
-      ElNotification.error({ message: result.message })
-    }
+  if (editIncomplete) {
+    ElNotification.warning({ message: "The related document list is still in editing." })
   }
-  catch {
-    ElNotification.error({ message: "There is a problem with the server. Please try again later." })
+  else if (inputIncomplete) {
+    ElNotification.warning({ message: "The document input is incomplete." })
+  }
+  else {
+    try {
+      const result = await useFetchCustom.$post("/Repository", {
+        name: addDocInfo.value.name,
+        attachment: values.attachment,
+        type: addDocInfo.value.type,
+        relatedDoc: addRelatedDocInfo.value.map(doc => ({
+          name: doc.nameWithExt,
+          attachment: doc.attachment,
+          type: doc.type,
+        })),
+      })
+
+      if (!result.error) {
+        addDocInfo.value.name = null
+        addDocInfo.value.type = null
+        addDocInfo.value.attachment.resetField()
+        addDocInfo.value.attachmentInfo = null
+        ElNotification.success({ message: result.message })
+        refreshNuxtData()
+      }
+      else {
+        ElNotification.error({ message: result.message })
+      }
+    }
+    catch {
+      ElNotification.error({ message: "There is a problem with the server. Please try again later." })
+    }
   }
   loading.value.create = false
 })
@@ -299,7 +297,7 @@ const addRelatedDoc = () => {
     isAdding: true,
     name: null,
     type: null,
-    attachment: useField('relatedAttachment'), // Create a new field for each document
+    attachment: null,
     attachmentInfo: null,
   })
 }
@@ -330,7 +328,7 @@ const findRelatedDoc = async(status) => {
           addRelatedDocInfo.value.push({
             name: foundedDoc,
             type: null,
-            attachment: useField('relatedAttachment'), // Create a new field for each document
+            attachment: null,
             attachmentInfo: null,
           })
         })

@@ -181,6 +181,8 @@
                           >
                             {{ item.isFlagged ? 'Unflag' : 'Flag' }}
                           </v-list-item>
+                          <v-divider class="m-2"/>
+                          <v-list-item prepend-icon="mdi-file-document-multiple-outline" @click="selectDoc('RelatedDoc', item)">Related Documents</v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
                           <v-divider class="m-2"/>
                           <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
@@ -194,7 +196,11 @@
             <template #expanded-row="{ columns, item }">
               <tr class="expanded">
                 <td :colspan="columns.length">
-                  <DocumentRepositoryDescriptionInfo :doc-info="item"/>
+                  <DocumentRepositoryDescriptionInfo
+                    :doc-info="item"
+                    @open-edit-modal="selectDoc('Edit', item)"
+                    @open-related-doc="selectDoc('RelatedDoc', item)"
+                  />
                 </td>
               </tr>
             </template>
@@ -255,6 +261,15 @@
       @close-modal="versionHistoryModal = $event"
     />
   </SharedUiModal>
+
+  <!-- Related Document Modal -->
+  <SharedUiModal v-model="relatedDocModal" title="Related Documents" width="900">
+    <DocumentRepositoryRelatedDocument
+      :doc-id="selectedDocInfo.id"
+      @close-modal="relatedDocModal = $event"
+      @select-doc="selectDoc($event[0], $event[1])"
+    />
+  </SharedUiModal>
 </template>
 
 <script setup>
@@ -283,6 +298,7 @@ const renameDocModal = ref(false)
 const editDocModal = ref(false)
 const updateAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
+const relatedDocModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
 const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
 const docSearchList = filterOption.value.docNameList.map(item => {
@@ -322,7 +338,7 @@ const pageCount = () => {
 }
 const selectDoc = (action, doc) => {
   selectedDocInfo.value = doc
-
+  console.log(selectedDocInfo.value);
   if (action == "Rename") {
     renameDocModal.value = true
   }
@@ -332,8 +348,11 @@ const selectDoc = (action, doc) => {
   else if (action == "Update") {
     updateAttachmentModal.value = true
   }
-  else if (action = "VersionHistory") {
+  else if (action == "VersionHistory") {
     versionHistoryModal.value = true
+  }
+  else if (action == "RelatedDoc") {
+    relatedDocModal.value = true
   }
   else {
     ElNotification.error({ message: "Undefined action performed" })
