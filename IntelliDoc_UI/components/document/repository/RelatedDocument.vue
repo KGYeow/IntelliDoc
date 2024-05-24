@@ -9,7 +9,7 @@
             :headers="[
               { key: 'name', title: 'Name' },
               { key: 'modifiedBy', title: 'Modified By', width: '140' },
-              { key: 'modifiedDate', title: 'Modified Time', width: '140' },
+              { key: 'modifiedDate', title: 'Modified Time', width: '150' },
               { key: 'actions', sortable: false, width: 0 },
             ]"
             :sort-by="[{ key: 'name', order: 'asc' }]"
@@ -17,6 +17,7 @@
             sort-asc-icon="mdi-arrow-up-thin"
             :items="relatedDocs"
             :items-per-page="itemsPerPage"
+            :loading="loading"
             hover
           >
             <template #item="{ item }">
@@ -26,7 +27,7 @@
                     class="p-0 text-nowrap"
                     :prepend-icon="'text-h5 '+ (item.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box')"
                   >
-                    <span class="row-link" @click="showInformation(item)">
+                    <span class="row-link" @click="selectedDocInfo = item">
                       <v-tooltip :text="item.name" activator="parent" location="top" offset="2"/>
                       {{ item.name }}
                     </span>
@@ -79,7 +80,7 @@
             <template #bottom>
               <div class="d-flex justify-content-end pt-2">
                 <el-pagination
-                  :layout="relatedDocs.length > itemsPerPage ? 'total, prev, pager, next' : 'total'"
+                  layout="total, prev, pager, next"
                   v-model:current-page="currentPage"
                   :page-size="relatedDocs.length/pageCount()"
                   :total="relatedDocs.length"
@@ -94,7 +95,7 @@
       </div>
       <v-col cols="3" style="height: 376px;">
         <el-scrollbar max-height="352px">
-          <div class="text-body-1 overflow-hidden">
+          <div class="text-body-2 overflow-hidden">
             <el-empty class="my-8" :image-size="120" description="No selected document information" v-if="selectedDocInfo == null"/>
             <v-row class="pt-3" v-else>
               <v-col>
@@ -103,7 +104,7 @@
                     <v-label class="text-caption fw-bold">Name</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">{{ selectedDocInfo.name }}</div>
+                    <div>{{ selectedDocInfo.name }}</div>
                   </v-col>
                 </v-row>
                 <v-row class="pb-3">
@@ -111,7 +112,7 @@
                     <v-label class="text-caption fw-bold">Version</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">{{ selectedDocInfo.currentVersion }}</div>
+                    <div>{{ selectedDocInfo.currentVersion }}</div>
                   </v-col>
                 </v-row>
                 <v-row class="pb-3">
@@ -119,7 +120,7 @@
                     <v-label class="text-caption fw-bold">Type</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">{{ selectedDocInfo.type }}</div>
+                    <div>{{ selectedDocInfo.type }}</div>
                   </v-col>
                 </v-row>
                 <v-row class="pb-3">
@@ -127,7 +128,7 @@
                     <v-label class="text-caption fw-bold">Modified By</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">
+                    <div>
                       <span v-if="selectedDocInfo.modifiedBy">{{ selectedDocInfo.modifiedBy }}</span>
                       <span class="text-muted fst-italic" v-else>Deleted Account</span>
                     </div>
@@ -138,7 +139,17 @@
                     <v-label class="text-caption fw-bold">Modified Time</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">{{ dayjs(selectedDocInfo.modifiedDate).format('DD MMM YYYY, hh:mm A') }}</div>
+                    <div>{{ dayjs(selectedDocInfo.modifiedDate).format('DD MMM YYYY, hh:mm A') }}</div>
+                  </v-col>
+                </v-row>
+                <v-row class="pb-3">
+                  <v-col class="py-0" cols="12">
+                    <v-label class="text-caption fw-bold">Categories</v-label>
+                  </v-col>
+                  <v-col class="py-0" cols="12" style="margin-top: 0.156rem;">
+                    <div>
+                      <el-tag class="me-1 mb-1" effect="light" v-for="category in selectedDocInfo.category.split(', ')">{{ category }}</el-tag>
+                    </div>
                   </v-col>
                 </v-row>
                 <v-row class="pb-3">
@@ -146,7 +157,7 @@
                     <v-label class="text-caption fw-bold">Description</v-label>
                   </v-col>
                   <v-col class="py-0" cols="12">
-                    <div class="text-body-2">{{ selectedDocInfo.description ?? '-' }}</div>
+                    <div>{{ selectedDocInfo.description ?? '-' }}</div>
                   </v-col>
                 </v-row>
               </v-col>
@@ -156,7 +167,8 @@
       </v-col>
     </v-row>
   </v-card-text>
-  <v-card-actions class="p-3 justify-content-end">
+  <v-card-actions class="p-3 justify-content-between  ">
+    <v-btn color="primary" prepend-icon="mdi-paperclip-plus" variant="tonal" @click="emit('create-doc', mainDocId)">Add Related Document</v-btn>
     <v-btn color="primary" @click="emit('close-modal', false)">Close</v-btn>
   </v-card-actions>
 </template>
@@ -167,44 +179,19 @@ import dayjs from 'dayjs'
 
 // Properties, Emit & Model
 const props = defineProps({
-  docId: Number,  
+  mainDocId: Number,  
 })
-const emit = defineEmits(['close-modal','select-doc'])
+const emit = defineEmits(['close-modal', 'select-doc', 'create-doc'])
 
 // Data
 const currentPage = ref(1)
 const itemsPerPage = ref(6)
 const selectedDocInfo = ref(null)
-const { data: relatedDocs } = await useFetchCustom.$get(`/Repository/RelatedDocs/${props.docId}`)
+const { data: relatedDocs, pending: loading } = await useFetchCustom.$get(`/Repository/RelatedDocs/${props.mainDocId}`)
 
 // Methods
 const pageCount = () => {
   return Math.ceil(relatedDocs.value.length / itemsPerPage.value)
-}
-const selectDoc = (action, doc) => {
-  selectedDocInfo.value = doc
-
-  // if (action == "Rename") {
-  //   renameDocModal.value = true
-  // }
-  // else if (action == "Edit") {
-  //   editDocModal.value = true
-  // }
-  // else if (action == "Update") {
-  //   updateAttachmentModal.value = true
-  // }
-  // else if (action == "VersionHistory") {
-  //   versionHistoryModal.value = true
-  // }
-  // else if (action == "RelatedDoc") {
-  //   relatedDocModal.value = true
-  // }
-  // else {
-  //   ElNotification.error({ message: "Undefined action performed" })
-  // }
-}
-const showInformation = (doc) => {
-  selectedDocInfo.value = doc
 }
 const downloadDoc = async(doc) => {
   const attachment = await useFetchCustom.$fetch(`/Repository/GetAttachment/${doc.id}/0`)
@@ -228,43 +215,9 @@ const downloadDoc = async(doc) => {
     document.body.removeChild(link)
   }
 }
-const downloadDocVersion = async(docVersion) => {
-  const attachment = await useFetchCustom.$fetch(`/Repository/GetAttachment/${props.docId}/${docVersion}`)
-  const mimeType = {
-    "PDF": "application/pdf",
-    "Word": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "Excel": "application/vnd.ms-excel",
-  }
-  const arrayBuffer = Buffer.from(attachment, 'base64');
-  const blob = new Blob([arrayBuffer], { type: mimeType[props.docType] })
-  const url = URL.createObjectURL(blob)
-
-  if (props.docType == 'PDF')
-    window.open(url, '_blank')
-  else {
-    const link = document.createElement('a')
-    link.href = url
-    link.download = props.docName
-    link.click()
-    document.body.appendChild(link)
-    document.body.removeChild(link)
-  }
-}
 const archiveDoc = async(docId) => {
   try {
     const result = await useFetchCustom.$put(`/Repository/Archive/${docId}/0`)
-    if (!result.error) {
-      ElNotification.success({ message: result.message })
-      refreshNuxtData()
-    }
-    else {
-      ElNotification.error({ message: result.message })
-    }
-  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
-}
-const archiveDocVersion = async(docVersion) => {
-  try {
-    const result = await useFetchCustom.$put(`/Repository/Archive/${props.docId}/${docVersion}`)
     if (!result.error) {
       ElNotification.success({ message: result.message })
       refreshNuxtData()

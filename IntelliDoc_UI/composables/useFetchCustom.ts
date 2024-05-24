@@ -31,6 +31,14 @@ export const useFetchCustom = {
       params: params,
     })
   },
+  $asyncData(requestURL: string, params: {} = {}) {
+    return useAsyncData(requestURL, () =>
+      $fetch(baseURL + requestURL, {
+        headers: { 'Authorization': `${useAuth().token.value}` },
+        params: params,
+      })
+    )
+  },
   $delete(requestURL: string) {
     return fetchResult(requestURL, 'DELETE')
   }

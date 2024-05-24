@@ -186,11 +186,13 @@ const versionHistoryModal = ref(false)
 const emptyArchiveModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Archive/FilterOption")
 const { data: archiveList } = await useFetchCustom.$get("/Archive/Filter", filter.value)
-const docSearchList = filterOption.value.docNameList.map(item => {
-  return {
-    ...item,
-    prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
-  }
+const docSearchList = computed(() => {
+  return filterOption.value.docNameList.map(item => {
+    return {
+      ...item,
+      prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+    }
+  })
 })
 const docTypeList = ref([
   { name: "PDF", prependIcon: "mdi-file-pdf-box" },

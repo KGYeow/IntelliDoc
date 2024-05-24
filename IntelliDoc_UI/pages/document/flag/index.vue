@@ -255,11 +255,13 @@ const editAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Flag/FilterOption")
 const { data: docList } = await useFetchCustom.$get("/Flag/Filter", filter.value)
-const docSearchList = filterOption.value.docNameList.map(item => {
-  return {
-    ...item,
-    prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
-  }
+const docSearchList = computed(() => {
+  return filterOption.value.docNameList.map(item => {
+    return {
+      ...item,
+      prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+    }
+  })
 })
 const docTypeList = ref([
   { name: "PDF", prependIcon: "mdi-file-pdf-box" },

@@ -79,27 +79,13 @@ namespace IntelliDoc_API.Controllers
                     id = x.DocumentRelatedId,
                     name = x.DocumentRelated.Name,
                     description = x.DocumentRelated.Description,
+                    category = x.DocumentRelated.Category,
                     currentVersion = x.DocumentRelated.CurrentVersion,
                     modifiedById = x.DocumentRelated.ModifiedById,
                     modifiedBy = x.DocumentRelated.ModifiedBy.FullName,
                     modifiedDate = x.DocumentRelated.ModifiedDate,
                     type = x.DocumentRelated.Type,
                 }).ToList();
-/*            var l = from doc in context.Documents.Include(a => a.ModifiedBy).Where(a => a.Id == docId)
-                    join relation in context.DocumentRelationships.Where(a => a.DocumentMainId == docId)
-                    on doc.Id equals relation.DocumentMainId into grouping
-                    from relation in grouping.DefaultIfEmpty()
-                    select new
-                    {
-                        id = doc.Id,
-                        name = doc.Name,
-                        description = doc.Description,
-                        currentVersion = doc.CurrentVersion,
-                        modifiedById = doc.ModifiedById,
-                        modifiedBy = doc.ModifiedBy.FullName,
-                        modifiedDate = doc.ModifiedDate,
-                        type = doc.Type,
-                    };*/
             return Ok(l);
         }
 
@@ -175,7 +161,7 @@ namespace IntelliDoc_API.Controllers
                 Type = dto.Type,
                 HaveArchivedDocVersion = false,
                 IsAllVersionsArchived = false,
-                IsRelatedDoc = false
+                IsRelatedDoc = dto.MainDocId != null
             };
             context.Documents.Add(document);
             context.SaveChanges();
@@ -192,14 +178,34 @@ namespace IntelliDoc_API.Controllers
             context.DocumentVersionHistories.Add(versionHistory);
             context.SaveChanges();
 
+            // If the uploaded document is a subdocument/related document of a main document.
+            if (dto.MainDocId != null)
+            {
+                context.DocumentRelationships.Add(new DocumentRelationship
+                {
+                    DocumentMainId = (int)dto.MainDocId,
+                    DocumentRelatedId = document.Id,
+                });
+                context.SaveChanges();
+            }
+
+            // Upload the related subdocuments for the main uploaded document.
             if (dto.RelatedDoc.Count != 0)
             {
                 dto.RelatedDoc.ForEach(doc =>
                 {
+                    var existingDoc = context.Documents.Where(a => a.Name == doc.Name).Any();
+
+                    if (existingDoc)
+                        throw new Exception("The document name already exists");
+
+                    var classification = modelService.Classify(doc.Attachment, doc.Name);
+                    string assignedCategories = string.Join(", ", classification.OrderBy(a => a));
+
                     var relatedDocument = new Document
                     {
                         Name = doc.Name,
-                        Category = "Others",
+                        Category = assignedCategories == "" ? "Others" : assignedCategories,
                         CurrentVersion = 1,
                         CreatedById = user.Id,
                         CreatedDate = DateTime.Now,
@@ -211,14 +217,12 @@ namespace IntelliDoc_API.Controllers
                         IsRelatedDoc = true
                     };
                     context.Documents.Add(relatedDocument);
-                    context.SaveChanges();
 
                     context.DocumentRelationships.Add(new DocumentRelationship
                     {
                         DocumentMainId = document.Id,
                         DocumentRelatedId = relatedDocument.Id,
                     });　
-                    context.SaveChanges();
 
                     var versionHistory = new DocumentVersionHistory
                     {
@@ -226,12 +230,13 @@ namespace IntelliDoc_API.Controllers
                         Version = 1,
                         ModifiedById = user.Id,
                         ModifiedDate = DateTime.Now,
-                        Attachment = dto.Attachment,
+                        Attachment = doc.Attachment,
                         IsArchived = false
                     };
                     context.DocumentVersionHistories.Add(versionHistory);
-                    context.SaveChanges();
+                    
                 });
+                context.SaveChanges();
             }
 
             return Ok(new Response { Status = "Success", Message = "New document created successfully" });

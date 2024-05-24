@@ -15,8 +15,12 @@
         sort-asc-icon="mdi-arrow-up-thin"
         :items="docVersionHistory"
         :items-per-page="itemsPerPage"
+        :loading="loading"
         hover
       >
+        <template #loading>
+          <v-skeleton-loader type="table-row@5"/>
+        </template>
         <template #item="{ item }">
           <tr>
             <td>{{ item.version }}</td>
@@ -91,7 +95,7 @@ const emit = defineEmits(['close-modal'])
 // Data
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
-const { data: docVersionHistory } = await useFetchCustom.$get(`/Repository/VersionHistory/${props.docId}`)
+const { data: docVersionHistory, pending: loading } = await useFetchCustom.$get(`/Repository/VersionHistory/${props.docId}`)
 
 // Methods
 const pageCount = () => {

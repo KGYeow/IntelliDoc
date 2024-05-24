@@ -7,7 +7,7 @@
             <v-col>
               <v-label class="text-caption">Document</v-label>
               <v-file-input
-                variant="outlined"
+                variant="outlined" 
                 density="compact"
                 prepend-icon=""
                 clear-icon="mdi-close-circle-outline fs-5"
@@ -20,7 +20,7 @@
               />
             </v-col>
           </v-row>
-          <v-row>
+          <v-row v-if="mainDocId == null">
             <v-col cols="12" class="py-0">
               <v-checkbox
                 class="text-caption"
@@ -112,7 +112,7 @@
                         <div class="text-center">No related documents found from the uploaded document</div>
                       </v-col>
                       <v-col cols="12" class="relatedDocInputs">
-                        <v-btn class="text-muted" color="background" density="compact" prepend-icon="mdi-plus" block flat @click="addRelatedDoc">
+                        <v-btn class="text-muted" color="background" density="comfortable" prepend-icon="mdi-paperclip-plus" block flat @click="addRelatedDoc">
                           Add related document
                         </v-btn>
                       </v-col>
@@ -138,7 +138,10 @@
 import { useField, useForm } from 'vee-validate'
 
 // Properties, Emit & Model
-const emit = defineEmits(['close-modal'])
+const props = defineProps({
+  mainDocId: { type: Number, default: null, required: false },
+})
+const emit = defineEmits(['close-modal', 'reset-mainDocId'])
 
 // Data
 const { handleSubmit } = useForm({
@@ -267,6 +270,7 @@ const createDoc = handleSubmit(async(values) => {
         name: addDocInfo.value.name,
         attachment: values.attachment,
         type: addDocInfo.value.type,
+        mainDocId: props.mainDocId,
         relatedDoc: addRelatedDocInfo.value.map(doc => ({
           name: doc.nameWithExt,
           attachment: doc.attachment,
@@ -275,10 +279,13 @@ const createDoc = handleSubmit(async(values) => {
       })
 
       if (!result.error) {
+        emit('close-modal', false)
+        emit('reset-mainDocId', null)
         addDocInfo.value.name = null
         addDocInfo.value.type = null
         addDocInfo.value.attachment.resetField()
         addDocInfo.value.attachmentInfo = null
+        addRelatedDocInfo.value = []
         ElNotification.success({ message: result.message })
         refreshNuxtData()
       }
@@ -311,7 +318,6 @@ const addRelatedDocName = async(i) => {
 }
 const removeRelatedDoc = (index) => {
   addRelatedDocInfo.value.splice(index, 1)
-  console.log(addRelatedDocInfo.value)
 }
 const findRelatedDoc = async(status) => {
   addRelatedDocInfo.value = []

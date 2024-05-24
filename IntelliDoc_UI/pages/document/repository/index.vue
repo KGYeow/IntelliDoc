@@ -84,6 +84,7 @@
             sort-asc-icon="mdi-arrow-up-thin"
             :items="docList"
             :items-per-page="itemsPerPage"
+            :loading="tableLoading"
             hover
           >
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
@@ -222,7 +223,11 @@
 
   <!-- Create Document Modal -->
   <SharedUiModal v-model="createDocModal" title="Create Document" width="700">
-    <DocumentRepositoryCreateForm @close-modal="createDocModal = $event"/>
+    <DocumentRepositoryCreateForm
+      :main-doc-id="addRelatedDocInfo.mainDocId"
+      @reset-mainDocId="addRelatedDocInfo.mainDocId = $event"
+      @close-modal="createDocModal = $event"
+    />
   </SharedUiModal>
 
   <!-- Rename Document Modal -->
@@ -265,9 +270,10 @@
   <!-- Related Document Modal -->
   <SharedUiModal v-model="relatedDocModal" title="Related Documents" width="900">
     <DocumentRepositoryRelatedDocument
-      :doc-id="selectedDocInfo.id"
+      :main-doc-id="selectedDocInfo.id"
       @close-modal="relatedDocModal = $event"
       @select-doc="selectDoc($event[0], $event[1])"
+      @create-doc="addRelatedDoc($event)"
     />
   </SharedUiModal>
 </template>
@@ -286,12 +292,11 @@ const filter = ref({
   type: null,
 })
 const selectedDocInfo = ref({})
+const addRelatedDocInfo = ref({
+  mainDocId: null,
+})
 const loading = ref({
   addDoc: false,
-  updateDoc: false,
-  downloadDoc: false,
-  flagDoc: false,
-  archiveDoc: false,
 })
 const createDocModal = ref(false)
 const renameDocModal = ref(false)
@@ -300,12 +305,14 @@ const updateAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
 const relatedDocModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
-const { data: docList } = await useFetchCustom.$get("/Repository/Filter", filter.value)
-const docSearchList = filterOption.value.docNameList.map(item => {
-  return {
-    ...item,
-    prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
-  }
+const { data: docList, pending: tableLoading } = await useFetchCustom.$get("/Repository/Filter", filter.value)
+const docSearchList = computed(() => {
+  return filterOption.value.docNameList.map(item => {
+    return {
+      ...item,
+      prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+    }
+  })
 })
 const docTypeList = ref([
   { name: "PDF", prependIcon: "mdi-file-pdf-box" },
@@ -338,7 +345,7 @@ const pageCount = () => {
 }
 const selectDoc = (action, doc) => {
   selectedDocInfo.value = doc
-  console.log(selectedDocInfo.value);
+
   if (action == "Rename") {
     renameDocModal.value = true
   }
@@ -357,6 +364,10 @@ const selectDoc = (action, doc) => {
   else {
     ElNotification.error({ message: "Undefined action performed" })
   }
+}
+const addRelatedDoc = (mainDocId) => {
+  addRelatedDocInfo.value.mainDocId = mainDocId
+  createDocModal.value = true
 }
 const downloadDoc = async(doc) => {
   loading.value.downloadDoc = true
