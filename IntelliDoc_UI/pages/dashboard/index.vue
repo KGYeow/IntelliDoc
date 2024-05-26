@@ -13,7 +13,10 @@
         </v-col>
         <v-col cols="12" lg="4" class="d-flex flex-column">
           <div class="mb-6">
-            <DashboardTotalStoredDoc :total-stored-doc="data.totalStoredDoc"/>
+            <DashboardTotalDoc
+              :total-stored-doc="data.totalStoredDoc"
+              :total-archived-doc="data.totalArchivedDoc"
+            />
           </div>
           <div class="flex-grow-1">
             <DashboardTop3Categories

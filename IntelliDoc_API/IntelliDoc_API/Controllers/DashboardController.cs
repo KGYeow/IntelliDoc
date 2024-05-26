@@ -3,6 +3,7 @@ using IntelliDoc_API.Models;
 using IntelliDoc_API.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mime;
 
 namespace IntelliDoc_API.Controllers
 {
@@ -19,22 +20,32 @@ namespace IntelliDoc_API.Controllers
 
         // Get the Dashboard data.
         [HttpGet]
+        [Route("DocCategories")]
+        public IActionResult DocCategories()
+        {
+            return Ok(new {});
+        }
+
+        // Get the Dashboard data.
+        [HttpGet]
         [Route("DashboardData")]
         public IActionResult DashboardData()
         {
             var docCategory = modelService.GetCategoryList().ToList().OrderBy(a => a);
-
             var storedDocNum = new List<int>();
             for (int i = 0; i < docCategory.Count(); i++)
-                storedDocNum.Add(context.Documents.Where(d => d.IsAllVersionsArchived == false && d.Category.Contains(docCategory.ElementAt(i))).Count());
-
+                storedDocNum.Add(
+                    context.Documents.Where(d => d.IsAllVersionsArchived == false && d.Category.Contains(docCategory.ElementAt(i))).Count()
+                );
             var archivedDocNum = new List<int>();
             for (int i = 0; i < docCategory.Count(); i++)
-                archivedDocNum.Add(context.Documents.Where(d => d.HaveArchivedDocVersion == true && d.Category.Contains(docCategory.ElementAt(i))).Count());
-
+                archivedDocNum.Add(
+                    context.Documents.Where(d => d.HaveArchivedDocVersion == true && d.Category.Contains(docCategory.ElementAt(i))).Count()
+            );
             var yAxisMax = storedDocNum.Concat(archivedDocNum).Max() < 10 ? 10 : storedDocNum.Concat(archivedDocNum).Max();
 
             var totalStoredDoc = context.Documents.Where(d => d.IsAllVersionsArchived == false).Count();
+            var totalArchivedDoc = context.Documents.Where(d => d.HaveArchivedDocVersion == true).Count();
 
             var storedDoc = new List<StoredDoc>();
             for (int i = 0; i < docCategory.Count(); i++)
@@ -43,7 +54,7 @@ namespace IntelliDoc_API.Controllers
             var top3CategoriesName = top3Categories.Select(d => d.Category).ToList();
             var top3CategoriesFrequency = top3Categories.Select(d => d.Frequency).ToList();
 
-            return Ok(new { docCategory, storedDocNum, archivedDocNum, yAxisMax, totalStoredDoc, top3CategoriesName, top3CategoriesFrequency });
+            return Ok(new { docCategory, storedDocNum, archivedDocNum, yAxisMax, totalStoredDoc, totalArchivedDoc, top3CategoriesName, top3CategoriesFrequency });
         }
 
         public class StoredDoc
