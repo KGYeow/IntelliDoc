@@ -131,7 +131,7 @@ print("Accuracy Score:", accuracy_score(y_test, y_pred), "\n")
 
 print("Confusion Matrix:")
 print(confusion_matrix(y_test, y_pred), "\n")
-
+ 
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
 

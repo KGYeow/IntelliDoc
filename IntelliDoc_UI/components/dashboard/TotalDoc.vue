@@ -11,14 +11,14 @@
               <v-col cols="6">
                 <v-card-title class="text-subtitle-1 py-0">Stored</v-card-title>
                 <v-card-title class="text-h4 py-0">
-                  <v-tooltip :text="`Total Results: ${props.totalStoredDoc}`" activator="parent" location="top" offset="5"/>
+                  <v-tooltip :text="`Total Stored Documents: ${props.totalStoredDoc}`" activator="parent" location="top" offset="5"/>
                   {{ props.totalStoredDoc }}
                 </v-card-title>
               </v-col>
               <v-col cols="6">
                 <v-card-title class="text-subtitle-1 py-0">Archived</v-card-title>
                 <v-card-title class="text-h4 py-0">
-                  <v-tooltip :text="`Total Accepted: ${props.totalArchivedDoc}`" activator="parent" location="top" offset="5"/>
+                  <v-tooltip :text="`Total Archived Documents: ${props.totalArchivedDoc}`" activator="parent" location="top" offset="5"/>
                   {{ props.totalArchivedDoc }}
                 </v-card-title>
               </v-col>

@@ -25,11 +25,18 @@ namespace IntelliDoc_API.Controllers
         [Route("FilterOption")]
         public IActionResult GetRepositoryFilterOption()
         {
-            var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false).ToList()
-                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name, type = x.Type });
-            var docCategoryList = modelService.GetCategoryList().ToList().OrderBy(a => a);
+            var fullDocNameList = new List<object>();
+            var docNameList = context.Documents.Where(a => a.IsAllVersionsArchived == false && a.IsRelatedDoc == false)
+                .OrderBy(a => a.Name).Select(x => new { id = x.Id, name = x.Name, type = x.Type }).ToList();
+            var docCategoryList = modelService.GetCategoryList().OrderBy(a => a).ToList();
 
-            return Ok(new { docNameList, docCategoryList });
+            foreach (var doc in docNameList)
+            {
+                var relatedDocs = context.DocumentRelationships.Include(a => a.DocumentRelated).Where(a => a.DocumentMainId == doc.id)
+                    .Select(x => new { id = x.DocumentRelatedId, name = x.DocumentRelated.Name, type = x.DocumentRelated.Type }).ToList();
+                fullDocNameList.Add(new { doc.id, doc.name, doc.type, relatedDocs });
+            }
+            return Ok(new { fullDocNameList, docCategoryList });
         }
 
         // Get the filtered repository list.
@@ -197,7 +204,7 @@ namespace IntelliDoc_API.Controllers
                     var existingDoc = context.Documents.Where(a => a.Name == doc.Name).Any();
 
                     if (existingDoc)
-                        throw new Exception("The document name already exists");
+                        throw new Exception("The related document name already exists");
 
                     var classification = modelService.Classify(doc.Attachment, doc.Name);
                     string assignedCategories = string.Join(", ", classification.OrderBy(a => a));
@@ -217,12 +224,13 @@ namespace IntelliDoc_API.Controllers
                         IsRelatedDoc = true
                     };
                     context.Documents.Add(relatedDocument);
+                    context.SaveChanges();
 
                     context.DocumentRelationships.Add(new DocumentRelationship
                     {
                         DocumentMainId = document.Id,
                         DocumentRelatedId = relatedDocument.Id,
-                    });　
+                    });
 
                     var versionHistory = new DocumentVersionHistory
                     {
@@ -234,11 +242,10 @@ namespace IntelliDoc_API.Controllers
                         IsArchived = false
                     };
                     context.DocumentVersionHistories.Add(versionHistory);
-                    
+                    context.SaveChanges();
                 });
-                context.SaveChanges();
             }
-
+            context.SaveChanges();
             return Ok(new Response { Status = "Success", Message = "New document created successfully" });
         }
 

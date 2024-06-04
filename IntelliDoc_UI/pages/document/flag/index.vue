@@ -4,7 +4,7 @@
       <SharedUiCard :header="false" :footer="false">
         <v-row class="pt-4">
           <!-- Filters -->
-          <v-col class="pe-0" cols="4">
+          <v-col class="pe-0" cols="5">
             <v-autocomplete
               :items="docSearchList"
               item-title="name"
@@ -15,12 +15,22 @@
               append-inner-icon="mdi-magnify"
               menu-icon=""
               v-model="filter.docId"
+              @update:search="docSearch = $event"
+              auto-select-first
               item-props
               hide-details
               :menu-props="{ width: '0'}"
-            />
+            >
+              <template #no-data>
+                <v-list-item>
+                  <v-list-item-title>
+                    No results matching "<strong>{{ docSearch }}</strong>"
+                  </v-list-item-title>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
           </v-col>
-          <v-col class="pe-0" cols="3">
+          <v-col class="pe-0" cols="2">
             <v-select
               :items="filterOption.docCategoryList"
               item-title="name"
@@ -74,6 +84,7 @@
             sort-asc-icon="mdi-arrow-up-thin"
             :items="docList"
             :items-per-page="itemsPerPage"
+            :loading="tableLoading"
             hover
           >
             <template #item="{ item, internalItem, toggleExpand, isExpanded }">
@@ -238,6 +249,7 @@ import { Buffer } from 'buffer'
 import dayjs from 'dayjs'
 
 // Data
+const docSearch = ref(null)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filter = ref({
@@ -254,7 +266,7 @@ const renameDocModal = ref(false)
 const editAttachmentModal = ref(false)
 const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Flag/FilterOption")
-const { data: docList } = await useFetchCustom.$get("/Flag/Filter", filter.value)
+const { data: docList, pending: tableLoading } = await useFetchCustom.$get("/Flag/Filter", filter.value)
 const docSearchList = computed(() => {
   return filterOption.value.docNameList.map(item => {
     return {

@@ -30,11 +30,11 @@ builder.Services.AddDbContext<IntelliDocDBContext>(options =>
 {
     options.UseSqlServer(configuration.GetConnectionString("ConnStr"));
 });
-builder.Services.Configure<IntelliDocDBSettings>(options =>
+/*builder.Services.Configure<IntelliDocDBSettings>(options =>
 {
     options.ConnectionString = configuration.GetConnectionString("ConnUri");
     options.DatabaseName = "IntelliDocDB";
-});
+});*/
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {

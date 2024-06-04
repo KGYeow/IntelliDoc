@@ -4,7 +4,7 @@
       <SharedUiCard :header="false" :footer="false">
         <v-row class="pt-4">
           <!-- Filters -->
-          <v-col class="pe-0" cols="4">
+          <v-col class="pe-0" cols="5">
             <v-autocomplete
               :items="docSearchList"
               item-title="name"
@@ -15,12 +15,40 @@
               append-inner-icon="mdi-magnify"
               menu-icon=""
               v-model="filter.docId"
+              @update:search="docSearchBar.query = $event"
+              @update:modelValue="docSearchBar.selectedDocId = $event"
+              :search="docSearchBar.enteredQuery"
+              :custom-filter="docSearchFilter"
+              auto-select-first
               item-props
               hide-details
-              :menu-props="{ width: '0'}"
-            />
+              filter-mode="some"
+              :list-props="{ activatable: true }"
+              :menu-props="{ width: '0' }"
+            >
+              <template #no-data>
+                <v-list-item>
+                  <v-list-item-title>
+                    No results matching "<strong>{{ docSearchBar.query }}</strong>"
+                  </v-list-item-title>
+                </v-list-item>
+              </template>
+              <template #item="{ item, props }">
+                <v-list-item :active="item.value == docSearchBar.selectedDocId" :prepend-icon="props.prependIcon" min-height="50px" @click="docSearchBar.enteredQuery = item.title">
+                  <v-list-item-title>
+                    {{ item.title }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-subtitle-2">
+                    Containing
+                  </v-list-item-subtitle>
+                  <!-- <template #append>
+                    <v-btn icon="mdi-information" variant="text" density="compact"></v-btn>
+                  </template> -->
+                </v-list-item>
+              </template>
+            </v-autocomplete>
           </v-col>
-          <v-col class="pe-0" cols="3">
+          <v-col class="pe-0" cols="2">
             <v-select
               :items="filterOption.docCategoryList"
               item-title="name"
@@ -62,7 +90,7 @@
             <!-- Add New Document Button -->
             <v-btn class="float-end" color="primary" :prepend-icon="loading.addDoc ? null : 'mdi-file-document-plus-outline'" flat @click="createDocModal = true" :disabled="loading.addDoc">
               <v-progress-circular class="me-2" color="white" :size="18" :width="3" indeterminate v-if="loading.addDoc"/>
-              {{ loading.addDoc ? 'Adding new document' : 'New Document' }}
+              {{ loading.addDoc ? 'Uploading new document' : 'Upload New Document' }}
             </v-btn>
           </v-col>
         </v-row>
@@ -222,7 +250,7 @@
   </v-row>
 
   <!-- Create Document Modal -->
-  <SharedUiModal v-model="createDocModal" title="Create Document" width="700">
+  <SharedUiModal v-model="createDocModal" title="Create New Document" width="700">
     <DocumentRepositoryCreateForm
       :main-doc-id="addRelatedDocInfo.mainDocId"
       @reset-mainDocId="addRelatedDocInfo.mainDocId = $event"
@@ -284,6 +312,11 @@ import { Buffer } from 'buffer'
 import dayjs from 'dayjs'
 
 // Data
+const docSearchBar = ref({
+  query: null,
+  enteredQuery: null,
+  selectedDocId: null,
+})
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const filter = ref({
@@ -307,10 +340,10 @@ const relatedDocModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Repository/FilterOption")
 const { data: docList, pending: tableLoading } = await useFetchCustom.$get("/Repository/Filter", filter.value)
 const docSearchList = computed(() => {
-  return filterOption.value.docNameList.map(item => {
+  return filterOption.value.fullDocNameList.map(item => {
     return {
       ...item,
-      prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
+      prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box",
     }
   })
 })
@@ -340,6 +373,14 @@ definePageMeta({
 })
 
 // Methods
+const docSearchFilter = (itemTitle, queryText, item) => {
+  const comparedDocName = itemTitle.toLowerCase()
+  const comparedRelatedDocName = item.raw.relatedDocs
+  const searchText = queryText.toLowerCase()
+
+  return comparedDocName.indexOf(searchText) > -1 || 
+    comparedRelatedDocName.some(doc => { return doc.name.toLowerCase().indexOf(searchText) > -1 })
+}
 const pageCount = () => {
   return Math.ceil(docList.value.length / itemsPerPage.value)
 }

@@ -20,14 +20,6 @@ namespace IntelliDoc_API.Controllers
 
         // Get the Dashboard data.
         [HttpGet]
-        [Route("DocCategories")]
-        public IActionResult DocCategories()
-        {
-            return Ok(new {});
-        }
-
-        // Get the Dashboard data.
-        [HttpGet]
         [Route("DashboardData")]
         public IActionResult DashboardData()
         {

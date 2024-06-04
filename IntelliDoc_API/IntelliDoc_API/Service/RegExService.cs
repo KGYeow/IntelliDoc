@@ -57,8 +57,14 @@ namespace IntelliDoc_API.Service
         {
             string docText = DocumentTextExtraction(docBytes, docName);
 
-            List<string> matchedPatterns = new List<string>();
-            matchedPatterns = Regex.Matches(docText, @"(LAMPIRAN [A-Z]{1}[0-9]{2})\b").Cast<Match>().Select(m => m.Value).ToList();
+            var matchedPatterns = new List<string>();
+            var lampiranAppendixPattern = @"(LAMPIRAN [A-Z]{1}[0-9]{2}|APPENDIX [A-Z]{1}[0-9]{2})";
+            var patterns = new string[] { lampiranAppendixPattern, @"([A-Z]{1}[0-9]{2}-[A-Z]{2}[0-9]{2})" };
+
+            foreach (var pattern in patterns)
+            {
+                matchedPatterns.AddRange(Regex.Matches(docText, pattern).Cast<Match>().Select(m => m.Value).ToList());
+            }
 
             return matchedPatterns;
         }

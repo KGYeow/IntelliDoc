@@ -43,7 +43,7 @@ namespace IntelliDoc_API.Controllers
                         accessList.Add(item.Page.AccessName);
                     }
                 }
-                Console.WriteLine(accessList);
+                 Console.WriteLine(accessList);
                 return Ok(accessList);
             }
             throw new Exception("Access pages not found.");

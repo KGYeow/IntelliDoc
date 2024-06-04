@@ -249,7 +249,7 @@ const uploadRelatedFile = async(i) => {
   }
   else {
     addRelatedDocInfo.value[i].type = null
-    addRelatedDocInfo.value[i].attachment.resetField()
+    addRelatedDocInfo.value[i].attachment = null
     addRelatedDocInfo.value[i].attachmentInfo = null
   }
 }
@@ -259,12 +259,13 @@ const createDoc = handleSubmit(async(values) => {
   const inputIncomplete = addRelatedDocInfo.value.some(doc => doc.attachment == null)
 
   if (editIncomplete) {
-    ElNotification.warning({ message: "The related document list is still in editing." })
-  }
-  else if (inputIncomplete) {
-    ElNotification.warning({ message: "The document input is incomplete." })
+    ElNotification.warning({ message: "The related document name is still in editing." })
   }
   else {
+    if (inputIncomplete) {
+      addRelatedDocInfo.value = addRelatedDocInfo.value.filter(doc => doc.attachment != null);
+    }
+
     try {
       const result = await useFetchCustom.$post("/Repository", {
         name: addDocInfo.value.name,

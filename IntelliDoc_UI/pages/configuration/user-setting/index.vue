@@ -166,11 +166,13 @@ const editUserModal = ref(false)
 const deleteUserModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/User/FilterOption")
 const { data: userList } = await useFetchCustom.$get("/User/Filter", filter.value)
-const userFullNameSearchList = filterOption.value.map(item => {
-  return {
-    ...item,
-    prependIcon: "mdi-account-circle"
-  }
+const userFullNameSearchList = computed(() => {
+  return filterOption.value.map(item => {
+    return {
+      ...item,
+      prependIcon: "mdi-account-circle"
+    }
+  })
 })
 
 // Head

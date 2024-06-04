@@ -177,6 +177,20 @@ namespace IntelliDoc_API.Controllers
                     existingDocRelationships = existingDocRelationships.Where(d => d.DocumentMainId == docId).ToList();
                 context.DocumentRelationships.RemoveRange(existingDocRelationships);
 
+                if (!existingDoc.IsRelatedDoc)
+                {
+                    foreach (var docRelation in existingDocRelationships)
+                    {
+                        var relatedDoc = context.Documents.Where(d => d.Id == docRelation.DocumentRelatedId).FirstOrDefault();
+                        context.Documents.Remove(relatedDoc);
+
+                        var relatedDocVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == relatedDoc.Id).ToList();
+                        context.DocumentVersionHistories.RemoveRange(relatedDocVersionHistories);
+
+                        context.SaveChanges();
+                    }
+                }
+
                 context.Documents.Remove(existingDoc);
                 context.SaveChanges();
             }
@@ -204,7 +218,6 @@ namespace IntelliDoc_API.Controllers
                 {
                     var existingDocInActions = context.DocumentUserActions.Where(d => d.DocumentId == docId).ToList();
                     context.DocumentUserActions.RemoveRange(existingDocInActions);
-                    context.Documents.Remove(existingDoc);
 
                     var existingDocRelationships = context.DocumentRelationships.ToList();
                     if (existingDoc.IsRelatedDoc)
@@ -212,6 +225,21 @@ namespace IntelliDoc_API.Controllers
                     else
                         existingDocRelationships = existingDocRelationships.Where(d => d.DocumentMainId == docId).ToList();
                     context.DocumentRelationships.RemoveRange(existingDocRelationships);
+
+                    if (!existingDoc.IsRelatedDoc)
+                    {
+                        foreach (var docRelation in existingDocRelationships)
+                        {
+                            var relatedDoc = context.Documents.Where(d => d.Id == docRelation.DocumentRelatedId).FirstOrDefault();
+                            context.Documents.Remove(relatedDoc);
+
+                            var relatedDocVersionHistories = context.DocumentVersionHistories.Where(d => d.DocumentId == relatedDoc.Id).ToList();
+                            context.DocumentVersionHistories.RemoveRange(relatedDocVersionHistories);
+
+                            context.SaveChanges();
+                        }
+                    }
+                    context.Documents.Remove(existingDoc);
                 }
                 else
                 {
