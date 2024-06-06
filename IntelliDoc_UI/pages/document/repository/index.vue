@@ -16,14 +16,10 @@
               menu-icon=""
               v-model="filter.docId"
               @update:search="docSearchBar.query = $event"
-              @update:modelValue="docSearchBar.selectedDocId = $event"
-              :search="docSearchBar.enteredQuery"
               :custom-filter="docSearchFilter"
               auto-select-first
               item-props
               hide-details
-              filter-mode="some"
-              :list-props="{ activatable: true }"
               :menu-props="{ width: '0' }"
             >
               <template #no-data>
@@ -33,17 +29,24 @@
                   </v-list-item-title>
                 </v-list-item>
               </template>
-              <template #item="{ item, props }">
-                <v-list-item :active="item.value == docSearchBar.selectedDocId" :prepend-icon="props.prependIcon" min-height="50px" @click="docSearchBar.enteredQuery = item.title">
-                  <v-list-item-title>
-                    {{ item.title }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="text-subtitle-2">
-                    Containing
-                  </v-list-item-subtitle>
-                  <!-- <template #append>
-                    <v-btn icon="mdi-information" variant="text" density="compact"></v-btn>
-                  </template> -->
+              <template #item="{ props }">
+                <v-list-item :="props">
+                  <template #append>
+                    <v-btn density="compact" variant="plain" icon v-if="props.relatedDocs.length > 0">
+                      <v-icon icon="mdi-chevron-right-circle"/>
+                      <v-menu activator="parent" location="end" width="350px" offset="15">
+                        <v-list :items="props.relatedDocs" item-title="name">
+                          <v-list-subheader class="fw-bold bg-grey200">Relevant Documents</v-list-subheader>
+                          <v-list-item
+                            :prepend-icon="subitem.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'"
+                            v-for="subitem in props.relatedDocs"
+                          >
+                            <v-list-item-title class="text-caption">{{ subitem.name }}</v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
+                    </v-btn>
+                  </template>
                 </v-list-item>
               </template>
             </v-autocomplete>
@@ -211,7 +214,6 @@
                             {{ item.isFlagged ? 'Unflag' : 'Flag' }}
                           </v-list-item>
                           <v-divider class="m-2"/>
-                          <v-list-item prepend-icon="mdi-file-document-multiple-outline" @click="selectDoc('RelatedDoc', item)">Related Documents</v-list-item>
                           <v-list-item prepend-icon="mdi-history" @click="selectDoc('VersionHistory', item)">Version History</v-list-item>
                           <v-divider class="m-2"/>
                           <v-list-item prepend-icon="mdi-archive-outline" @click="archiveDoc(item.id)">Archive</v-list-item>
@@ -225,11 +227,21 @@
             <template #expanded-row="{ columns, item }">
               <tr class="expanded">
                 <td :colspan="columns.length">
-                  <DocumentRepositoryDescriptionInfo
-                    :doc-info="item"
-                    @open-edit-modal="selectDoc('Edit', item)"
-                    @open-related-doc="selectDoc('RelatedDoc', item)"
-                  />
+                  <v-row class="py-2 text-body-2">
+                    <v-col>
+                      <DocumentRepositoryDescriptionInfo :doc-info="item" @open-edit-modal="selectDoc('Edit', item)"/>
+                    </v-col>
+                    <div>
+                      <v-divider class="m-0" vertical/>
+                    </div>
+                    <v-col>
+                      <DocumentRepositoryRelatedDocument
+                        :main-doc-id="item.id"
+                        @select-doc="selectDoc($event[0], $event[1])"
+                        @create-doc="addRelatedDoc($event)"
+                      />
+                    </v-col>
+                  </v-row>
                 </td>
               </tr>
             </template>
@@ -249,8 +261,8 @@
     </v-col>
   </v-row>
 
-  <!-- Create Document Modal -->
-  <SharedUiModal v-model="createDocModal" title="Create New Document" width="700">
+  <!-- Upload Document Modal -->
+  <SharedUiModal v-model="createDocModal" title="Upload New Document" width="700">
     <DocumentRepositoryCreateForm
       :main-doc-id="addRelatedDocInfo.mainDocId"
       @reset-mainDocId="addRelatedDocInfo.mainDocId = $event"
@@ -295,8 +307,8 @@
     />
   </SharedUiModal>
 
-  <!-- Related Document Modal -->
-  <SharedUiModal v-model="relatedDocModal" title="Related Documents" width="900">
+  <!-- Relevant Document Modal -->
+  <SharedUiModal v-model="relatedDocModal" title="Relevant Documents" width="900">
     <DocumentRepositoryRelatedDocument
       :main-doc-id="selectedDocInfo.id"
       @close-modal="relatedDocModal = $event"
@@ -377,9 +389,8 @@ const docSearchFilter = (itemTitle, queryText, item) => {
   const comparedDocName = itemTitle.toLowerCase()
   const comparedRelatedDocName = item.raw.relatedDocs
   const searchText = queryText.toLowerCase()
-
-  return comparedDocName.indexOf(searchText) > -1 || 
-    comparedRelatedDocName.some(doc => { return doc.name.toLowerCase().indexOf(searchText) > -1 })
+  const result = comparedDocName.indexOf(searchText)
+  return result > -1 ? result : comparedRelatedDocName.some(doc => { return doc.name.toLowerCase().indexOf(searchText) > -1 })
 }
 const pageCount = () => {
   return Math.ceil(docList.value.length / itemsPerPage.value)

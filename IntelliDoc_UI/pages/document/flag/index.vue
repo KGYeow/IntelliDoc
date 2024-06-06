@@ -15,17 +15,38 @@
               append-inner-icon="mdi-magnify"
               menu-icon=""
               v-model="filter.docId"
-              @update:search="docSearch = $event"
+              @update:search="docSearchBar.query = $event"
+              :custom-filter="docSearchFilter"
               auto-select-first
               item-props
               hide-details
-              :menu-props="{ width: '0'}"
+              :menu-props="{ width: '0' }"
             >
               <template #no-data>
                 <v-list-item>
                   <v-list-item-title>
-                    No results matching "<strong>{{ docSearch }}</strong>"
+                    No results matching "<strong>{{ docSearchBar.query }}</strong>"
                   </v-list-item-title>
+                </v-list-item>
+              </template>
+              <template #item="{ props }">
+                <v-list-item :="props">
+                  <template #append>
+                    <v-btn density="compact" variant="plain" icon v-if="props.relatedDocs.length > 0">
+                      <v-icon icon="mdi-chevron-right-circle"/>
+                      <v-menu activator="parent" location="end" width="350px" offset="15">
+                        <v-list :items="props.relatedDocs" item-title="name">
+                          <v-list-subheader class="fw-bold bg-grey200">Relevant Documents</v-list-subheader>
+                          <v-list-item
+                            :prepend-icon="subitem.type == 'PDF' ? 'mdi-file-pdf-box' : 'mdi-file-word-box'"
+                            v-for="subitem in props.relatedDocs"
+                          >
+                            <v-list-item-title class="text-caption">{{ subitem.name }}</v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
+                    </v-btn>
+                  </template>
                 </v-list-item>
               </template>
             </v-autocomplete>
@@ -268,7 +289,7 @@ const versionHistoryModal = ref(false)
 const { data: filterOption } = await useFetchCustom.$get("/Flag/FilterOption")
 const { data: docList, pending: tableLoading } = await useFetchCustom.$get("/Flag/Filter", filter.value)
 const docSearchList = computed(() => {
-  return filterOption.value.docNameList.map(item => {
+  return filterOption.value.fullDocNameList.map(item => {
     return {
       ...item,
       prependIcon: item.type == "PDF" ? "mdi-file-pdf-box" : "mdi-file-word-box"
@@ -301,6 +322,13 @@ definePageMeta({
 })
 
 // Methods
+const docSearchFilter = (itemTitle, queryText, item) => {
+  const comparedDocName = itemTitle.toLowerCase()
+  const comparedRelatedDocName = item.raw.relatedDocs
+  const searchText = queryText.toLowerCase()
+  const result = comparedDocName.indexOf(searchText)
+  return result > -1 ? result : comparedRelatedDocName.some(doc => { return doc.name.toLowerCase().indexOf(searchText) > -1 })
+}
 function getFileExtension (docName) {
   const extensionIndex = docName.lastIndexOf(".")
   return docName.slice(extensionIndex + 1) // Get the extension

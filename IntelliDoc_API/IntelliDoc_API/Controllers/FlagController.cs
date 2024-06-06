@@ -24,13 +24,21 @@ namespace IntelliDoc_API.Controllers
         public IActionResult GetFlagFilterOption()
         {
             var user = userService.GetUser(User);
+            var fullDocNameList = new List<object>();
             var docNameList = context.DocumentUserActions
                 .Include(a => a.Document).Where(a => a.UserId == user.Id && a.IsFlagged == true)
                 .ToList().OrderBy(a => a.Document.Name)
                 .Select(x => new { id = x.DocumentId, name = x.Document.Name, type = x.Document.Type });
             var docCategoryList = modelService.GetCategoryList().ToList().OrderBy(a => a);
 
-            return Ok(new { docNameList, docCategoryList });
+            foreach (var doc in docNameList)
+            {
+                var relatedDocs = context.DocumentRelationships.Include(a => a.DocumentRelated).Where(a => a.DocumentMainId == doc.id)
+                    .Select(x => new { id = x.DocumentRelatedId, name = x.DocumentRelated.Name, type = x.DocumentRelated.Type }).ToList();
+                fullDocNameList.Add(new { doc.id, doc.name, doc.type, relatedDocs });
+            }
+
+            return Ok(new { fullDocNameList, docCategoryList });
         }
 
         // Get the filtered flagged document list.

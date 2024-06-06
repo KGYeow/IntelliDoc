@@ -19,7 +19,7 @@
               auto-select-first
               item-props
               hide-details
-              :menu-props="{ width: '0'}"
+              :menu-props="{ width: '0' }"
             >
               <template #no-data>
                 <v-list-item>
