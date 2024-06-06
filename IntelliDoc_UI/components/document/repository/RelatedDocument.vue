@@ -78,7 +78,6 @@ const props = defineProps({
 const emit = defineEmits(['select-doc', 'create-doc'])
 
 // Data
-const itemsPerPage = ref(6)
 const selectedDocInfo = ref(null)
 const { data: relatedDocs, pending: loading } = await useFetchCustom.$get(`/Repository/RelatedDocs/${props.mainDocId}`)
 

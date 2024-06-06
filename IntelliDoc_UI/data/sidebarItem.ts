@@ -64,6 +64,13 @@ const sidebarItem: menu[] = [
         auth: true,
         accessName: "ConfigurationUserSetting",
       },
+      // {
+      //   title: "User Manual",
+      //   icon: tablerIcon.FileStackIcon,
+      //   to: "/configuration/user-manual",
+      //   auth: true,
+      //   accessName: "ConfigurationUserManual",
+      // },
     ]
   },
 ]

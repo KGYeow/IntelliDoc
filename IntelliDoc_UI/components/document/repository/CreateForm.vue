@@ -28,10 +28,30 @@
                 density="compact"
                 v-model="hasRelatedDoc"
                 @update:model-value="findRelatedDoc($event)"
+                width="200px"
                 hide-details
               >
                 <template #label>
-                  <v-label class="text-caption">Upload related document</v-label>
+                  <v-label class="text-caption">Upload relevant document</v-label>
+                </template>
+                <template #append>
+                  <v-btn size="x-small" variant="text" density="comfortable" :="props" icon>
+                    <v-icon icon="mdi-help-circle-outline" size="small"/>
+                    <v-menu activator="parent" location="end" offset="5">
+                      <v-sheet class="p-2 text-caption" width="350px" color="surface-variant">
+                        The content of uploaded document will be scanned to detect possible relevant documents. More information is in the document link below:
+                        <el-link
+                          class="text-caption"
+                          type="info"
+                          @click="getDocManual('User Manual - Upload Relevant Documents.pdf')"
+                          style="filter: brightness(1.5);"
+                        >
+                          <v-icon class="me-1" size="x-small" icon="mdi-open-in-new"></v-icon>
+                          User Manual - Upload Relevant Documents.pdf
+                        </el-link>
+                      </v-sheet>
+                    </v-menu>
+                  </v-btn>
                 </template>
               </v-checkbox>
             </v-col>
@@ -42,7 +62,7 @@
                 <v-row class="justify-content-center">
                   <v-col cols="9" v-if="loading.find">
                     <div class="text-center">
-                      Finding related documents from the uploaded document
+                      Finding relevant documents from the uploaded document
                       <v-progress-linear class="mt-4" color="primary" rounded indeterminate/>
                     </div>
                   </v-col>
@@ -109,11 +129,11 @@
                         </v-row>
                       </v-col>
                       <v-col cols="9" class="pb-0" v-if="addRelatedDocInfo.length == 0">
-                        <div class="text-center">No related documents found from the uploaded document</div>
+                        <div class="text-center">No relevant documents found from the uploaded document</div>
                       </v-col>
                       <v-col cols="12" class="relatedDocInputs">
                         <v-btn class="text-muted" color="background" density="comfortable" prepend-icon="mdi-paperclip-plus" block flat @click="addRelatedDoc">
-                          Add related document
+                          Add relevant document
                         </v-btn>
                       </v-col>
                     </v-row>
@@ -136,6 +156,7 @@
 
 <script setup>
 import { useField, useForm } from 'vee-validate'
+import { Buffer } from 'buffer'
 
 // Properties, Emit & Model
 const props = defineProps({
@@ -259,7 +280,7 @@ const createDoc = handleSubmit(async(values) => {
   const inputIncomplete = addRelatedDocInfo.value.some(doc => doc.attachment == null)
 
   if (editIncomplete) {
-    ElNotification.warning({ message: "The related document name is still in editing." })
+    ElNotification.warning({ message: "The relevant document name is still in editing." })
   }
   else {
     if (inputIncomplete) {
@@ -350,5 +371,19 @@ const findRelatedDoc = async(status) => {
     }
     loading.value.find = false
   }
+}
+const getDocManual = async(docName) => {
+  try {
+    const result = await useFetchCustom.$fetch(`/UserManual/GetManualDocument/${docName}`)
+    if (!result.error) {
+      const arrayBuffer = Buffer.from(result.attachment, 'base64');
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    }
+    else {
+      ElNotification.error({ message: result.message })
+    }
+  } catch { ElNotification.error({ message: "There is a problem with the server. Please try again later." }) }
 }
 </script>

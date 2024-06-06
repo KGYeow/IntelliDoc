@@ -157,6 +157,22 @@ CREATE TABLE [dbo].[DocumentRelationship](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+/****** Object:  Table [dbo].[UserManualDocument]    Script Date: 7/6/2024 12:50:00 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[UserManualDocument](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [varchar](max) NOT NULL,
+	[Type] [varchar](10) NOT NULL,
+	[Attachment] [varbinary](max) NOT NULL,
+ CONSTRAINT [PK_UserManualDocument] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 
 SET IDENTITY_INSERT [dbo].[User] ON
 INSERT [dbo].[User] ([ID], [UserRoleID], [FullName], [Username], [Email], [IsActive], [Password]) VALUES (1, 1, N'Admin', N'admin', N'admin@gmail.com', 1, N'33354741122871651676713774147412831195')
@@ -181,6 +197,7 @@ INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (2, N'Repository', N'Doc
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (3, N'Flag', N'DocumentFlag')
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (4, N'Archive', N'DocumentArchive')
 INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (5, N'User Setting', N'ConfigurationUserSetting')
+INSERT [dbo].[Page] ([ID], [Name], [AccessName]) VALUES (6, N'User Manual', N'ConfigurationUserManual')
 SET IDENTITY_INSERT [dbo].[Page] OFF
 GO
 
@@ -191,11 +208,11 @@ INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (2, 1, 2)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (3, 1, 3)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (4, 1, 4)
 INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (5, 1, 5)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 1, 6)
 /** Staff **/
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (6, 2, 1)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (7, 2, 2)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (8, 2, 3)
-INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (9, 2, 4)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (7, 2, 1)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (8, 2, 2)
+INSERT [dbo].[RoleAccessPage] ([ID], [UserRoleID], [PageID]) VALUES (9, 2, 3)
 SET IDENTITY_INSERT [dbo].[RoleAccessPage] OFF
 GO
 

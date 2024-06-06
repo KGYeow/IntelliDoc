@@ -34,7 +34,8 @@ namespace IntelliDoc_API.Controllers
             foreach (var doc in docNameList)
             {
                 var relatedDocs = context.DocumentRelationships.Include(a => a.DocumentRelated).Where(a => a.DocumentMainId == doc.id)
-                    .Select(x => new { id = x.DocumentRelatedId, name = x.DocumentRelated.Name, type = x.DocumentRelated.Type }).ToList();
+                    .OrderBy(a => a.DocumentRelated.Name).Select(x => new { id = x.DocumentRelatedId, name = x.DocumentRelated.Name, type = x.DocumentRelated.Type })
+                    .ToList();
                 fullDocNameList.Add(new { doc.id, doc.name, doc.type, relatedDocs });
             }
 

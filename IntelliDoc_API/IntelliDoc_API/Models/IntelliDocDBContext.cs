@@ -24,6 +24,7 @@ namespace IntelliDoc_API.Models
         public virtual DbSet<Page> Pages { get; set; } = null!;
         public virtual DbSet<RoleAccessPage> RoleAccessPages { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
+        public virtual DbSet<UserManualDocument> UserManualDocuments { get; set; } = null!;
         public virtual DbSet<UserRole> UserRoles { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -218,6 +219,19 @@ namespace IntelliDoc_API.Models
                     .HasForeignKey(d => d.UserRoleId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_User_UserRole");
+            });
+
+            modelBuilder.Entity<UserManualDocument>(entity =>
+            {
+                entity.ToTable("UserManualDocument");
+
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.Name).IsUnicode(false);
+
+                entity.Property(e => e.Type)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
             });
 
             modelBuilder.Entity<UserRole>(entity =>
